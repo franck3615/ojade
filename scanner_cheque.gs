@@ -5,8 +5,11 @@
  * trouvée, on peut la sélectionner d'un tap — exactement comme si on
  * la choisissait à la main dans le menu déroulant.
  *
- * Ne touche jamais à SituationRemiseFacture : cette feuille reste
- * gérée manuellement.
+ * Ne touche à SituationRemiseFacture que si l'opérateur le confirme
+ * explicitement : une fois C3:C7 entièrement rempli, la page propose
+ * de traiter la remise (traiterRemiseDepuisScan), qui reporte alors
+ * le contenu de ImpressionRemiseBank vers SituationRemiseFacture —
+ * jamais automatiquement, jamais sans confirmation.
  *
  * Prérequis à activer une seule fois dans l'éditeur Apps Script :
  *  1. Services (icône +) > Drive API > Ajouter (nécessaire pour l'OCR).
@@ -120,7 +123,22 @@ function ajouterChoixImpressionRemiseBank(choixTexte) {
   celluleMenu.setValue(choixTexte);
   feuilleImpression.getRange(ligneVide, COLONNE_MONTANT_IMPRESSION_CHEQUE).setValue(extraireMontantChoix_(choixTexte));
 
-  return { ligne: ligneVide };
+  return {
+    ligne: ligneVide,
+    remiseComplete: ligneVide === DERNIERE_LIGNE_IMPRESSION_CHEQUE
+  };
+}
+
+/**
+ * Appelée depuis la page web uniquement après confirmation explicite
+ * de l'opérateur (une fois C3:C7 entièrement rempli). Réutilise
+ * executerTraitementRemise_ (définie dans
+ * traitement_import_situation_remise_final.gs), la même logique que
+ * le menu TRAITEMENT_IMPORT_SITUATION_REMISE_FINAL, pour reporter
+ * ImpressionRemiseBank vers SituationRemiseFacture.
+ */
+function traiterRemiseDepuisScan() {
+  return executerTraitementRemise_();
 }
 
 /** Extrait le segment (séparé par |) à l'index donné d'une entrée du menu déroulant. */

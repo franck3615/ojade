@@ -93,6 +93,10 @@
           google.script.run
             .withSuccessHandler(function (resultat) {
               bouton.textContent = 'Ajoutée (ligne ' + resultat.ligne + ') ✓';
+
+              if (resultat.remiseComplete) {
+                afficherConfirmationRemise_(carte);
+              }
             })
             .withFailureHandler(function (erreur) {
               bouton.disabled = false;
@@ -109,6 +113,38 @@
 
         resultats.appendChild(carte);
       });
+    }
+
+    function afficherConfirmationRemise_(carte) {
+      const bloc = document.createElement('div');
+      bloc.style.marginTop = '10px';
+      bloc.style.paddingTop = '10px';
+      bloc.style.borderTop = '1px solid #eee';
+
+      const message = document.createElement('div');
+      message.className = 'note';
+      message.textContent = 'La remise est complète (C3 à C7 remplis).';
+      bloc.appendChild(message);
+
+      const boutonTraiter = document.createElement('button');
+      boutonTraiter.textContent = 'Traiter la remise (mettre à jour SituationRemiseFacture)';
+      boutonTraiter.onclick = function () {
+        boutonTraiter.disabled = true;
+        boutonTraiter.textContent = 'Traitement…';
+        google.script.run
+          .withSuccessHandler(function (rapport) {
+            boutonTraiter.textContent = 'Remise traitée : ' + rapport.compteurS + ' ligne(s) ajoutée(s) à SituationRemiseFacture ✓';
+          })
+          .withFailureHandler(function (erreur) {
+            boutonTraiter.disabled = false;
+            boutonTraiter.textContent = 'Traiter la remise (mettre à jour SituationRemiseFacture)';
+            alert(erreur.message);
+          })
+          .traiterRemiseDepuisScan();
+      };
+      bloc.appendChild(boutonTraiter);
+
+      carte.appendChild(bloc);
     }
 
     function escapeHtml(texte) {

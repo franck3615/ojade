@@ -1,27 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8">
-  <title>Untitled</title>
-  
-
-</head>
-<body>
-<!-- partial:index.partial.html -->
-<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulaire professionnel avec colonnes</title>
+    <title>Formulaire de commande</title>
     <style>
-        /* Styles généraux */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
 
-        /* Conteneur principal deux colonnes */
         .main-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -29,7 +17,6 @@
             align-items: start;
         }
 
-        /* Styles des sections */
         .form-section {
             margin-bottom: 20px;
             padding: 15px;
@@ -37,11 +24,9 @@
             border-radius: 5px;
         }
 
-        /* Colonnes spécifiques */
         .vendor-section { grid-column: 1; }
         .client-section { grid-column: 2; }
 
-        /* Styles des champs */
         .input-group {
             margin-bottom: 15px;
         }
@@ -62,100 +47,7 @@
             color: #999;
             font-style: italic;
         }
-    </style>
-</head>
-<body>
-    <h1>Formulaire de commande</h1>
-    
-    <div class="main-container">
-        <!-- Colonne VENDEUR -->
-        <div class="vendor-section">
-            <div class="form-section">
-                <h2>🔵 Coordonnées du Vendeur</h2>
-                
-                <div class="input-group">
-                    <label>Nom de l'entreprise</label>
-                    <input type="text" placeholder="Ex: Société TechPlus">
-                </div>
 
-                <div class="input-group">
-                    <label>Prénom responsable</label>
-                    <input type="text" placeholder="Ex: Marc">
-                </div>
-
-                <div class="input-group">
-                    <label>Adresse</label>
-                    <textarea rows="2" placeholder="Ex: 15 Rue des Entrepreneurs, Bâtiment B"></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label>Code Postal</label>
-                    <input type="text" placeholder="Ex: 75001">
-                </div>
-
-                <div class="input-group">
-                    <label>Téléphone</label>
-                    <input type="tel" placeholder="Ex: 01 23 45 67 89">
-                </div>
-
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" placeholder="Ex: contact@techplus.fr">
-                </div>
-            </div>
-        </div>
-
-        <!-- Colonne CLIENT -->
-        <div class="client-section">
-            <div class="form-section">
-                <h2>🔴 Coordonnées du Client</h2>
-                
-                <div class="input-group">
-                    <label>Nom complet</label>
-                    <input type="text" placeholder="Ex: DUPONT Jean">
-                </div>
-
-                <div class="input-group">
-                    <label>Prénom</label>
-                    <input type="text" placeholder="Ex: Jean">
-                </div>
-
-                <div class="input-group">
-                    <label>Adresse</label>
-                    <textarea rows="2" placeholder="Ex: 22 Avenue des Champs, Appt 3"></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label>Code Postal</label>
-                    <input type="text" placeholder="Ex: 69002">
-                </div>
-
-                <div class="input-group">
-                    <label>Téléphone</label>
-                    <input type="tel" placeholder="Ex: 06 12 34 56 78">
-                </div>
-
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" placeholder="Ex: jean.dupont@email.com">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section Commande (identique à précédemment) -->
-    <div class="form-section" style="clear: both; margin-top: 30px;">
-       <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de commande</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -169,11 +61,6 @@
         th {
             background-color: #f2f2f2;
         }
-        select, input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
         .total {
             font-weight: bold;
             font-size: 1.2em;
@@ -186,108 +73,127 @@
     </style>
 </head>
 <body>
-    <h1>Gestion de commande</h1>
-    
-    <table id="commandeTable">
-        <thead>
-            <tr>
-                <th>Désignation</th>
-                <th>Prix (€)</th>
-                <th>Quantité</th>
-                <th>Remise (%)</th>
-                <th>Montant (€)</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <select class="article" onchange="updatePrice(this)">
-                        <option value="">Sélectionnez un article</option>
-                        <option value="50">Ordinateur portable - 50€</option>
-                        <option value="30">Souris sans fil - 30€</option>
-                        <option value="100">Écran 24 pouces - 100€</option>
-                        <option value="20">Clavier mécanique - 20€</option>
-                        <option value="15">Casque audio - 15€</option>
-                    </select>
-                </td>
-                <td><input type="number" class="price" readonly></td>
-                <td><input type="number" class="quantity" min="1" value="1" onchange="calculateRow(this)"></td>
-                <td><input type="number" class="discount" min="0" max="100" value="0" onchange="calculateRow(this)"></td>
-                <td><input type="number" class="amount" readonly></td>
-                <td><button type="button" onclick="addRow()">+</button></td>
-            </tr>
-        </tbody>
-    </table>
-    
-    <div class="total">
-        Total: <span id="totalAmount">0</span> €
-    </div>
-    
-    <button type="button" onclick="submitForm()" style="margin-top: 20px;">Valider la commande</button>
+    <h1>Formulaire de commande</h1>
 
-    <script>
-        function updatePrice(select) {
-            const row = select.closest('tr');
-            const priceInput = row.querySelector('.price');
-            priceInput.value = select.value;
-            calculateRow(select);
-        }
+    <div class="main-container">
+        <!-- Colonne VENDEUR -->
+        <div class="vendor-section">
+            <div class="form-section">
+                <h2>🔵 Coordonnées du Vendeur</h2>
 
-        function calculateRow(input) {
-            const row = input.closest('tr');
-            const price = parseFloat(row.querySelector('.price').value) || 0;
-            const quantity = parseInt(row.querySelector('.quantity').value) || 0;
-            const discount = parseFloat(row.querySelector('.discount').value) || 0;
-            
-            const amount = (price * quantity) * (1 - discount / 100);
-            row.querySelector('.amount').value = amount.toFixed(2);
-            
-            calculateTotal();
-        }
+                <div class="input-group">
+                    <label for="vendorCompany">Nom de l'entreprise</label>
+                    <input type="text" id="vendorCompany" name="vendorCompany" placeholder="Ex: Société TechPlus">
+                </div>
 
-        function calculateTotal() {
-            let total = 0;
-            document.querySelectorAll('.amount').forEach(input => {
-                total += parseFloat(input.value) || 0;
-            });
-            document.getElementById('totalAmount').textContent = total.toFixed(2);
-        }
+                <div class="input-group">
+                    <label for="vendorFirstName">Prénom responsable</label>
+                    <input type="text" id="vendorFirstName" name="vendorFirstName" placeholder="Ex: Marc">
+                </div>
 
-        function addRow() {
-            const tbody = document.querySelector('#commandeTable tbody');
-            const newRow = tbody.insertRow();
-            
-            newRow.innerHTML = `
-                <td>
-                    <select class="article" onchange="updatePrice(this)">
-                        <option value="">Sélectionnez un article</option>
-                        <option value="50">Ordinateur portable - 50€</option>
-                        <option value="30">Souris sans fil - 30€</option>
-                        <option value="100">Écran 24 pouces - 100€</option>
-                        <option value="20">Clavier mécanique - 20€</option>
-                        <option value="15">Casque audio - 15€</option>
-                    </select>
-                </td>
-                <td><input type="number" class="price" readonly></td>
-                <td><input type="number" class="quantity" min="1" value="1" onchange="calculateRow(this)"></td>
-                <td><input type="number" class="discount" min="0" max="100" value="0" onchange="calculateRow(this)"></td>
-                <td><input type="number" class="amount" readonly></td>
-                <td><button type="button" onclick="this.closest('tr').remove(); calculateTotal()">-</button></td>
-            `;
-        }
+                <div class="input-group">
+                    <label for="vendorAddress">Adresse</label>
+                    <textarea id="vendorAddress" name="vendorAddress" rows="2" placeholder="Ex: 15 Rue des Entrepreneurs, Bâtiment B"></textarea>
+                </div>
 
-        function submitForm() {
-            alert(`Commande validée !\nTotal: ${document.getElementById('totalAmount').textContent} €`);
-        }
-    </script>
-</body>
-</html>
+                <div class="input-group">
+                    <label for="vendorZip">Code Postal</label>
+                    <input type="text" id="vendorZip" name="vendorZip" placeholder="Ex: 75001">
+                </div>
+
+                <div class="input-group">
+                    <label for="vendorPhone">Téléphone</label>
+                    <input type="tel" id="vendorPhone" name="vendorPhone" placeholder="Ex: 01 23 45 67 89">
+                </div>
+
+                <div class="input-group">
+                    <label for="vendorEmail">Email</label>
+                    <input type="email" id="vendorEmail" name="vendorEmail" placeholder="Ex: contact@techplus.fr">
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne CLIENT -->
+        <div class="client-section">
+            <div class="form-section">
+                <h2>🔴 Coordonnées du Client</h2>
+
+                <div class="input-group">
+                    <label for="clientName">Nom complet</label>
+                    <input type="text" id="clientName" name="clientName" placeholder="Ex: DUPONT Jean">
+                </div>
+
+                <div class="input-group">
+                    <label for="clientFirstName">Prénom</label>
+                    <input type="text" id="clientFirstName" name="clientFirstName" placeholder="Ex: Jean">
+                </div>
+
+                <div class="input-group">
+                    <label for="clientAddress">Adresse</label>
+                    <textarea id="clientAddress" name="clientAddress" rows="2" placeholder="Ex: 22 Avenue des Champs, Appt 3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="clientZip">Code Postal</label>
+                    <input type="text" id="clientZip" name="clientZip" placeholder="Ex: 69002">
+                </div>
+
+                <div class="input-group">
+                    <label for="clientPhone">Téléphone</label>
+                    <input type="tel" id="clientPhone" name="clientPhone" placeholder="Ex: 06 12 34 56 78">
+                </div>
+
+                <div class="input-group">
+                    <label for="clientEmail">Email</label>
+                    <input type="email" id="clientEmail" name="clientEmail" placeholder="Ex: jean.dupont@email.com">
+                </div>
+            </div>
+        </div>
     </div>
 
-</body>
-</html>
-<!-- partial -->
-  
+    <!-- Section Commande -->
+    <div class="form-section" style="margin-top: 30px;">
+        <h2>Détail de la commande</h2>
+
+        <table id="commandeTable">
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th>Prix (€)</th>
+                    <th>Quantité</th>
+                    <th>Remise (%)</th>
+                    <th>Montant (€)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <select class="article" onchange="updatePrice(this)">
+                            <option value="">Sélectionnez un article</option>
+                            <option value="50">Ordinateur portable - 50€</option>
+                            <option value="30">Souris sans fil - 30€</option>
+                            <option value="100">Écran 24 pouces - 100€</option>
+                            <option value="20">Clavier mécanique - 20€</option>
+                            <option value="15">Casque audio - 15€</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="price" readonly></td>
+                    <td><input type="number" class="quantity" min="1" value="1" onchange="calculateRow(this)"></td>
+                    <td><input type="number" class="discount" min="0" max="100" value="0" onchange="calculateRow(this)"></td>
+                    <td><input type="number" class="amount" readonly></td>
+                    <td><button type="button" onclick="addRow()">+</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="total">
+            Total: <span id="totalAmount">0</span> €
+        </div>
+
+        <button type="button" onclick="submitForm()" style="margin-top: 20px;">Valider la commande</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>

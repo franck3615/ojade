@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    h1 { font-size: 1.3em; }
+    button { padding: 10px 16px; font-size: 1em; margin-top: 12px; cursor: pointer; }
+    .client-card { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-top: 12px; }
+    .details { font-size: 0.9em; color: #555; margin: 4px 0 8px; }
+    .statut { margin-top: 12px; font-style: italic; color: #555; }
+    .note { font-size: 0.85em; margin-top: 4px; }
+    #apercu { max-width: 100%; margin-top: 12px; border-radius: 6px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>Scanner un chèque</h1>
+  <p>Prends le chèque en photo pour le retrouver dans le menu de ImpressionRemiseBank.</p>
+
+  <input type="file" id="photo" accept="image/*" capture="environment">
+  <img id="apercu">
+
+  <div id="statut" class="statut"></div>
+  <div id="resultats"></div>
+
+  <script>
+    document.getElementById('photo').addEventListener('change', function (e) {
+      const fichier = e.target.files[0];
+      if (!fichier) return;
+
+      const apercu = document.getElementById('apercu');
+      apercu.src = URL.createObjectURL(fichier);
+      apercu.style.display = 'block';
+
+      const statut = document.getElementById('statut');
+      const resultats = document.getElementById('resultats');
+      statut.textContent = 'Analyse du chèque en cours…';
+      resultats.innerHTML = '';
+
+      const lecteur = new FileReader();
+      lecteur.onload = function () {
+        const base64 = lecteur.result.split(',')[1];
+        google.script.run
+          .withSuccessHandler(afficherResultats)
+          .withFailureHandler(function (erreur) {
+            statut.textContent = 'Erreur : ' + erreur.message;
+          })
+          .analyserCheque(base64, fichier.type);
+      };
+      lecteur.readAsDataURL(fichier);
+    });
+
+    function afficherResultats(reponse) {
+      const statut = document.getElementById('statut');
+      const resultats = document.getElementById('resultats');
+      resultats.innerHTML = '';
+
+      if (!reponse.choix.length) {
+        statut.textContent = 'Aucune correspondance trouvée dans le menu de ImpressionRemiseBank.';
+        const texteLu = document.createElement('p');
+        texteLu.innerHTML = '<em>Texte lu : ' + escapeHtml(reponse.texteOcr) + '</em>';
+        resultats.appendChild(texteLu);
+        return;
+      }
+
+      statut.textContent = reponse.choix.length + ' correspondance(s) trouvée(s) :';
+
+      reponse.choix.forEach(function (choixTexte) {
+        const segments = choixTexte.split('|').map(function (s) { return s.trim(); });
+        const nom = segments[2] || '';
+        const code = segments[3] || '';
+        const bcNum = segments[4] || '';
+        const montant = segments[6] || '';
+
+        const carte = document.createElement('div');
+        carte.className = 'client-card';
+
+        const titre = document.createElement('strong');
+        titre.textContent = nom + (code ? ' (' + code + ')' : '');
+        carte.appendChild(titre);
+
+        const details = document.createElement('div');
+        details.className = 'details';
+        details.textContent = bcNum + ' — ' + montant + ' €';
+        carte.appendChild(details);
+
+        const bouton = document.createElement('button');
+        bouton.textContent = 'Ajouter à la remise en banque';
+        bouton.onclick = function () {
+          bouton.disabled = true;
+          bouton.textContent = 'Ajout…';
+          google.script.run
+            .withSuccessHandler(function (resultat) {
+              bouton.textContent = 'Ajoutée (ligne ' + resultat.ligne + ') ✓';
+
+              if (resultat.remiseComplete) {
+                afficherConfirmationRemise_(carte);
+              }
+            })
+            .withFailureHandler(function (erreur) {
+              bouton.disabled = false;
+              bouton.textContent = 'Ajouter à la remise en banque';
+              const note = document.createElement('div');
+              note.className = 'note';
+              note.style.color = '#a15c00';
+              note.textContent = erreur.message;
+              carte.appendChild(note);
+            })
+            .ajouterChoixImpressionRemiseBank(choixTexte);
+        };
+        carte.appendChild(bouton);
+
+        resultats.appendChild(carte);
+      });
+    }
+
+    function afficherConfirmationRemise_(carte) {
+      const bloc = document.createElement('div');
+      bloc.style.marginTop = '10px';
+      bloc.style.paddingTop = '10px';
+      bloc.style.borderTop = '1px solid #eee';
+
+      const message = document.createElement('div');
+      message.className = 'note';
+      message.textContent = 'La remise est complète (C3 à C7 remplis).';
+      bloc.appendChild(message);
+
+      const boutonTraiter = document.createElement('button');
+      boutonTraiter.textContent = 'Traiter la remise (mettre à jour SituationRemiseFacture)';
+      boutonTraiter.onclick = function () {
+        boutonTraiter.disabled = true;
+        boutonTraiter.textContent = 'Traitement…';
+        google.script.run
+          .withSuccessHandler(function (rapport) {
+            boutonTraiter.textContent = 'Remise traitée : ' + rapport.compteurS + ' ligne(s) ajoutée(s) à SituationRemiseFacture ✓';
+          })
+          .withFailureHandler(function (erreur) {
+            boutonTraiter.disabled = false;
+            boutonTraiter.textContent = 'Traiter la remise (mettre à jour SituationRemiseFacture)';
+            alert(erreur.message);
+          })
+          .traiterRemiseDepuisScan();
+      };
+      bloc.appendChild(boutonTraiter);
+
+      carte.appendChild(bloc);
+    }
+
+    function escapeHtml(texte) {
+      const div = document.createElement('div');
+      div.textContent = texte || '';
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

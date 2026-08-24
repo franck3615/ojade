@@ -87,8 +87,16 @@
             bouton.disabled = true;
             bouton.textContent = 'Confirmation…';
             google.script.run
-              .withSuccessHandler(function () {
-                bouton.textContent = 'Rapprochée ✓';
+              .withSuccessHandler(function (resultat) {
+                bouton.textContent = resultat.remiseAjoutee
+                  ? 'Rapprochée + remise ✓'
+                  : 'Rapprochée ✓';
+                const note = document.createElement('div');
+                note.style.fontSize = '0.85em';
+                note.style.color = resultat.remiseAjoutee ? '#2a7a2a' : '#a15c00';
+                note.style.marginTop = '4px';
+                note.textContent = resultat.message;
+                ligneDiv.appendChild(note);
               })
               .withFailureHandler(function (erreur) {
                 bouton.disabled = false;

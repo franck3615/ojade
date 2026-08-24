@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    h1 { font-size: 1.3em; }
+    button { padding: 10px 16px; font-size: 1em; margin-top: 12px; cursor: pointer; }
+    .client-card { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-top: 12px; }
+    .ligne-facture { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-top: 1px solid #eee; }
+    .statut { margin-top: 12px; font-style: italic; color: #555; }
+    #apercu { max-width: 100%; margin-top: 12px; border-radius: 6px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>Scanner un chèque</h1>
+  <p>Prends le chèque en photo pour retrouver automatiquement le client correspondant.</p>
+
+  <input type="file" id="photo" accept="image/*" capture="environment">
+  <img id="apercu">
+
+  <div id="statut" class="statut"></div>
+  <div id="resultats"></div>
+
+  <script>
+    document.getElementById('photo').addEventListener('change', function (e) {
+      const fichier = e.target.files[0];
+      if (!fichier) return;
+
+      const apercu = document.getElementById('apercu');
+      apercu.src = URL.createObjectURL(fichier);
+      apercu.style.display = 'block';
+
+      const statut = document.getElementById('statut');
+      const resultats = document.getElementById('resultats');
+      statut.textContent = 'Analyse du chèque en cours…';
+      resultats.innerHTML = '';
+
+      const lecteur = new FileReader();
+      lecteur.onload = function () {
+        const base64 = lecteur.result.split(',')[1];
+        google.script.run
+          .withSuccessHandler(afficherResultats)
+          .withFailureHandler(function (erreur) {
+            statut.textContent = 'Erreur : ' + erreur.message;
+          })
+          .analyserCheque(base64, fichier.type);
+      };
+      lecteur.readAsDataURL(fichier);
+    });
+
+    function afficherResultats(reponse) {
+      const statut = document.getElementById('statut');
+      const resultats = document.getElementById('resultats');
+      resultats.innerHTML = '';
+
+      if (!reponse.clients.length) {
+        statut.textContent = 'Aucun client correspondant trouvé dans le texte lu sur le chèque.';
+        const texteLu = document.createElement('p');
+        texteLu.innerHTML = '<em>Texte lu : ' + escapeHtml(reponse.texteOcr) + '</em>';
+        resultats.appendChild(texteLu);
+        return;
+      }
+
+      statut.textContent = reponse.clients.length + ' client(s) correspondant(s) trouvé(s) :';
+
+      reponse.clients.forEach(function (client) {
+        const carte = document.createElement('div');
+        carte.className = 'client-card';
+
+        const titre = document.createElement('strong');
+        titre.textContent = client.nomClient + (client.codeClient ? ' (' + client.codeClient + ')' : '');
+        carte.appendChild(titre);
+
+        client.lignes.forEach(function (numeroLigne) {
+          const ligneDiv = document.createElement('div');
+          ligneDiv.className = 'ligne-facture';
+
+          const label = document.createElement('span');
+          label.textContent = 'Ligne ' + numeroLigne + ' du fichier source';
+          ligneDiv.appendChild(label);
+
+          const bouton = document.createElement('button');
+          bouton.textContent = 'Marquer rapprochée';
+          bouton.onclick = function () {
+            bouton.disabled = true;
+            bouton.textContent = 'Confirmation…';
+            google.script.run
+              .withSuccessHandler(function () {
+                bouton.textContent = 'Rapprochée ✓';
+              })
+              .withFailureHandler(function (erreur) {
+                bouton.disabled = false;
+                bouton.textContent = 'Marquer rapprochée';
+                alert(erreur.message);
+              })
+              .marquerLigneRapprochee(numeroLigne);
+          };
+          ligneDiv.appendChild(bouton);
+
+          carte.appendChild(ligneDiv);
+        });
+
+        resultats.appendChild(carte);
+      });
+    }
+
+    function escapeHtml(texte) {
+      const div = document.createElement('div');
+      div.textContent = texte || '';
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

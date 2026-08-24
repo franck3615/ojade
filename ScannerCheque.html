@@ -95,8 +95,9 @@
                 note.style.fontSize = '0.85em';
                 note.style.color = resultat.remiseAjoutee ? '#2a7a2a' : '#a15c00';
                 note.style.marginTop = '4px';
+                note.style.width = '100%';
                 note.textContent = resultat.message;
-                ligneDiv.appendChild(note);
+                carte.appendChild(note);
               })
               .withFailureHandler(function (erreur) {
                 bouton.disabled = false;

@@ -11,10 +11,10 @@ function calculateRow(input) {
     const price = parseFloat(row.querySelector('.price').value) || 0;
     const quantity = parseInt(row.querySelector('.quantity').value) || 0;
     const discount = parseFloat(row.querySelector('.discount').value) || 0;
-    
+
     const amount = (price * quantity) * (1 - discount / 100);
     row.querySelector('.amount').value = amount.toFixed(2);
-    
+
     calculateTotal();
 }
 
@@ -28,27 +28,63 @@ function calculateTotal() {
 
 function addRow() {
     const tbody = document.querySelector('#commandeTable tbody');
-    const newRow = tbody.insertRow();
-    
-    newRow.innerHTML = `
-        <td>
-            <select class="article" onchange="updatePrice(this)">
-                <option value="">Sélectionnez un article</option>
-                <option value="50">Ordinateur portable - 50€</option>
-                <option value="30">Souris sans fil - 30€</option>
-                <option value="100">Écran 24 pouces - 100€</option>
-                <option value="20">Clavier mécanique - 20€</option>
-                <option value="15">Casque audio - 15€</option>
-            </select>
-        </td>
-        <td><input type="number" class="price" readonly></td>
-        <td><input type="number" class="quantity" min="1" value="1" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="discount" min="0" max="100" value="0" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="amount" readonly></td>
-        <td><button type="button" onclick="this.closest('tr').remove(); calculateTotal()">-</button></td>
-    `;
+    const newRow = tbody.querySelector('tr').cloneNode(true);
+
+    newRow.querySelector('.article').value = '';
+    newRow.querySelector('.price').value = '';
+    newRow.querySelector('.quantity').value = 1;
+    newRow.querySelector('.discount').value = 0;
+    newRow.querySelector('.amount').value = '';
+
+    const actionButton = newRow.querySelector('button');
+    actionButton.textContent = '-';
+    actionButton.setAttribute('onclick', "this.closest('tr').remove(); calculateTotal()");
+
+    tbody.appendChild(newRow);
 }
 
 function submitForm() {
-    alert(`Commande validée !\nTotal: ${document.getElementById('totalAmount').textContent} €`);
+    const vendeur = {
+        entreprise: document.getElementById('vendorCompany').value,
+        prenom: document.getElementById('vendorFirstName').value,
+        adresse: document.getElementById('vendorAddress').value,
+        codePostal: document.getElementById('vendorZip').value,
+        telephone: document.getElementById('vendorPhone').value,
+        email: document.getElementById('vendorEmail').value
+    };
+
+    const client = {
+        nom: document.getElementById('clientName').value,
+        prenom: document.getElementById('clientFirstName').value,
+        adresse: document.getElementById('clientAddress').value,
+        codePostal: document.getElementById('clientZip').value,
+        telephone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value
+    };
+
+    const lignes = [];
+    document.querySelectorAll('#commandeTable tbody tr').forEach(row => {
+        const articleSelect = row.querySelector('.article');
+        const designation = articleSelect.selectedIndex > 0
+            ? articleSelect.options[articleSelect.selectedIndex].text
+            : '';
+
+        lignes.push({
+            designation: designation,
+            prix: parseFloat(row.querySelector('.price').value) || 0,
+            quantite: parseInt(row.querySelector('.quantity').value) || 0,
+            remise: parseFloat(row.querySelector('.discount').value) || 0,
+            montant: parseFloat(row.querySelector('.amount').value) || 0
+        });
+    });
+
+    const commande = {
+        vendeur: vendeur,
+        client: client,
+        lignes: lignes,
+        total: document.getElementById('totalAmount').textContent
+    };
+
+    console.log('Commande :', commande);
+    alert(`Commande validée !\nTotal: ${commande.total} €`);
 }

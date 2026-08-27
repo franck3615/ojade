@@ -9,70 +9,30 @@
  * une fonction du script connue à l'avance, il est impossible de générer
  * une fonction « à la volée » avec un paramètre. On déclare donc un
  * nombre fixe de fonctions génériques (accederOnglet_0, accederOnglet_1,
- * …) et on mémorise, à chaque ouverture du classeur, quel onglet
- * correspond à quelle position.
+ * …) qui retrouvent l'onglet par sa position au moment du clic.
  */
 
 const NOMBRE_MAX_ONGLETS_MENU_ = 30;
-const CLE_PROPRIETE_ORDRE_ONGLETS_ = 'ORDRE_ONGLETS_MENU_ACCES_RAPIDE';
 
 function onOpen() {
-  const classeur = SpreadsheetApp.getActiveSpreadsheet();
-  const feuilles = classeur.getSheets();
+  const feuilles = SpreadsheetApp.getActiveSpreadsheet().getSheets();
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('📑 Aller à…');
 
-  const nomsOnglets = feuilles.map(f => f.getName());
-  PropertiesService.getDocumentProperties().setProperty(
-    CLE_PROPRIETE_ORDRE_ONGLETS_,
-    JSON.stringify(nomsOnglets)
-  );
-
-  const nombreItems = Math.min(nomsOnglets.length, NOMBRE_MAX_ONGLETS_MENU_);
+  const nombreItems = Math.min(feuilles.length, NOMBRE_MAX_ONGLETS_MENU_);
   for (let i = 0; i < nombreItems; i++) {
-    menu.addItem(nomsOnglets[i], 'accederOnglet_' + i);
-  }
-
-  if (nomsOnglets.length > NOMBRE_MAX_ONGLETS_MENU_) {
-    menu.addSeparator();
-    menu.addItem('Autre onglet…', 'accederOngletParSaisie_');
+    menu.addItem(feuilles[i].getName(), 'accederOnglet_' + i);
   }
 
   menu.addToUi();
 }
 
-/** Active l'onglet mémorisé à la position donnée. */
+/** Active l'onglet situé à la position donnée (0 = premier onglet). */
 function accederOngletParIndex_(index) {
-  const nomsOnglets = JSON.parse(
-    PropertiesService.getDocumentProperties().getProperty(CLE_PROPRIETE_ORDRE_ONGLETS_) || '[]'
-  );
-  const nom = nomsOnglets[index];
-  if (!nom) return;
-
-  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nom);
+  const feuilles = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  const feuille = feuilles[index];
   if (feuille) {
     feuille.activate();
-  }
-}
-
-/** Repli utilisé quand le classeur contient plus d'onglets que le menu n'en affiche. */
-function accederOngletParSaisie_() {
-  const ui = SpreadsheetApp.getUi();
-  const reponse = ui.prompt(
-    'Aller à un onglet',
-    "Nom exact de l'onglet :",
-    ui.ButtonSet.OK_CANCEL
-  );
-
-  if (reponse.getSelectedButton() !== ui.Button.OK) return;
-
-  const nom = reponse.getResponseText().trim();
-  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nom);
-
-  if (feuille) {
-    feuille.activate();
-  } else {
-    ui.alert('Onglet introuvable : « ' + nom + ' ».');
   }
 }
 

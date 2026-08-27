@@ -1,31 +1,10 @@
 /**
- * Menu de navigation rapide entre les onglets du classeur.
- *
- * Ajoute un menu « 📑 Aller à… » dans la barre de menus de Google Sheets,
- * listant chaque onglet du classeur : cliquer sur un item active
- * directement l'onglet correspondant.
- *
- * Contrainte de l'API Google Sheets : un item de menu doit pointer vers
- * une fonction du script connue à l'avance, il est impossible de générer
- * une fonction « à la volée » avec un paramètre. On déclare donc un
- * nombre fixe de fonctions génériques (accederOnglet_0, accederOnglet_1,
- * …) qui retrouvent l'onglet par sa position au moment du clic.
+ * Fonctions utilitaires pour le menu « 📑 Aller à… » (navigation rapide
+ * entre les onglets). Le menu lui-même est créé depuis le onOpen()
+ * principal du classeur (fichier contenant les autres menus).
  */
 
 const NOMBRE_MAX_ONGLETS_MENU_ = 30;
-
-function onOpen() {
-  const feuilles = SpreadsheetApp.getActiveSpreadsheet().getSheets();
-  const ui = SpreadsheetApp.getUi();
-  const menu = ui.createMenu('📑 Aller à…');
-
-  const nombreItems = Math.min(feuilles.length, NOMBRE_MAX_ONGLETS_MENU_);
-  for (let i = 0; i < nombreItems; i++) {
-    menu.addItem(feuilles[i].getName(), 'accederOnglet_' + i);
-  }
-
-  menu.addToUi();
-}
 
 /** Active l'onglet situé à la position donnée (0 = premier onglet). */
 function accederOngletParIndex_(index) {

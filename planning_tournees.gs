@@ -396,8 +396,10 @@ function marquerDatesAvecRdvCalendrier_(sh, ss, ui, startRow, endRow, colDate) {
   const nRows = endRow - startRow + 1;
   const dateRange = sh.getRange(startRow, colDate, nRows, 1);
   const dates = dateRange.getValues();
+  const tz = Session.getScriptTimeZone();
 
   const rdvParJour = {}; // cache : "yyyy-MM-dd" -> booléen, pour éviter d'interroger deux fois la même date
+  const joursOccupes = []; // dates uniques où l'agenda contient déjà un rendez-vous
 
   for (let i = 0; i < nRows; i++) {
     const row = startRow + i;
@@ -406,11 +408,12 @@ function marquerDatesAvecRdvCalendrier_(sh, ss, ui, startRow, endRow, colDate) {
 
     if (!d) { cell.setFontLine("none"); continue; }
 
-    const cle = Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
+    const cle = Utilities.formatDate(d, tz, "yyyy-MM-dd");
     if (!(cle in rdvParJour)) {
       const debutJour = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
       const finJour = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
       rdvParJour[cle] = cal.getEvents(debutJour, finJour).length > 0;
+      if (rdvParJour[cle]) joursOccupes.push(d);
     }
 
     if (rdvParJour[cle]) {
@@ -419,4 +422,41 @@ function marquerDatesAvecRdvCalendrier_(sh, ss, ui, startRow, endRow, colDate) {
       cell.setFontLine("none");
     }
   }
+
+  if (joursOccupes.length > 0) {
+    alertSafe_(ui, ss, "⚠️ Agenda déjà chargé", construireMessagePeriodesOccupees_(joursOccupes, tz));
+  }
+}
+
+
+/**
+ * Regroupe une liste de dates (uniques ou non) en périodes consécutives et
+ * renvoie un message listant chaque jour ou plage de jours occupée dans
+ * l'agenda, pour affichage à l'opérateur.
+ */
+function construireMessagePeriodesOccupees_(jours, tz) {
+  const tries = jours.slice().sort((a, b) => a.getTime() - b.getTime());
+  const periodes = [];
+  let debut = tries[0];
+  let fin = tries[0];
+
+  for (let i = 1; i < tries.length; i++) {
+    const veille = new Date(fin);
+    veille.setDate(veille.getDate() + 1);
+    if (tries[i].getTime() === veille.getTime()) {
+      fin = tries[i];
+    } else {
+      periodes.push([debut, fin]);
+      debut = tries[i];
+      fin = tries[i];
+    }
+  }
+  periodes.push([debut, fin]);
+
+  const fmt = d => Utilities.formatDate(d, tz, "dd/MM/yyyy");
+  const lignes = periodes.map(([d1, d2]) =>
+    d1.getTime() === d2.getTime() ? "- " + fmt(d1) : "- du " + fmt(d1) + " au " + fmt(d2)
+  );
+
+  return "L'agenda contient déjà des rendez-vous aux dates suivantes :\n\n" + lignes.join("\n");
 }

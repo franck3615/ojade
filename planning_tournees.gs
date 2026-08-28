@@ -10,8 +10,83 @@
  * verifierChronologieInitiale, ajusterWeekendAvecQuestions_,
  * verifierContactsEvolizDansPlanning) — non incluses dans ce fichier.
  */
+
+const CALENDAR_ID_TOURNEES = "c_868360d47ecc6aca018d78b3d339ac81f9292e9c62f7aab3fc34469ada9432ae@group.calendar.google.com";
+
+/**
+ * Point d'entrée du menu : propose à l'opérateur de consulter l'agenda avant
+ * de lancer le calcul. Comme les pop-up HTML d'Apps Script ne bloquent pas
+ * l'exécution du script, la suite du traitement (phase1_Planning_core) est
+ * relancée soit directement (réponse "Non"), soit via le bouton "Continuer"
+ * de la pop-up agenda (réponse "Oui").
+ */
 function phase1_Planning() {
   if (!verifierBonneFeuille_()) return;
+  const ui = getUiSafe_();
+
+  if (ui) {
+    const rep = ui.alert(
+      "Agenda",
+      "Voulez-vous visualiser l'agenda avant de lancer la planification ?",
+      ui.ButtonSet.YES_NO
+    );
+    if (rep === ui.Button.YES) {
+      afficherAgendaAvantPlanification_();
+      return;
+    }
+  }
+
+  return phase1_Planning_core();
+}
+
+
+/**
+ * Affiche l'agenda Google (à partir d'aujourd'hui) dans une pop-up modale,
+ * avec un bouton "Continuer" qui relance phase1_Planning_core() une fois
+ * l'opérateur informé des plages disponibles.
+ */
+function afficherAgendaAvantPlanification_() {
+  const tz = Session.getScriptTimeZone();
+  const dateDebut = Utilities.formatDate(new Date(), tz, "yyyyMMdd");
+
+  const embedUrl = "https://calendar.google.com/calendar/embed?src=" +
+    encodeURIComponent(CALENDAR_ID_TOURNEES) +
+    "&ctz=" + encodeURIComponent(tz) +
+    "&mode=WEEK&dates=" + dateDebut;
+
+  const html = HtmlService.createHtmlOutput(
+    '<div style="display:flex;flex-direction:column;height:600px;font-family:Arial,sans-serif;margin:0;">' +
+      '<iframe src="' + embedUrl + '" style="flex:1;border:0;width:100%;"></iframe>' +
+      '<div style="padding:8px;text-align:right;border-top:1px solid #ddd;">' +
+        '<button id="btnContinuer" onclick="continuerPlanification()" style="padding:8px 16px;font-size:14px;cursor:pointer;">' +
+          'Continuer la planification' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+    '<script>' +
+      'function continuerPlanification() {' +
+        'document.getElementById("btnContinuer").disabled = true;' +
+        'google.script.run' +
+          '.withSuccessHandler(function() { google.script.host.close(); })' +
+          '.withFailureHandler(function(err) { alert("Erreur : " + err.message); document.getElementById("btnContinuer").disabled = false; })' +
+          '.phase1_Planning_core();' +
+      '}' +
+    '</script>'
+  )
+    .setWidth(900)
+    .setHeight(650);
+
+  SpreadsheetApp.getUi().showModalDialog(html, "Agenda — consultez les disponibilités puis continuez");
+}
+
+
+/**
+ * Calcul complet de la tournée (itinéraire, durées, horaires, alertes
+ * calendrier). Peut être appelée directement, ou relancée par le bouton
+ * "Continuer" de la pop-up agenda affichée par phase1_Planning().
+ */
+function phase1_Planning_core() {
+  if (!verifierBonneFeuille_()) return false;
   const ss = SpreadsheetApp.getActive();
   const ui = getUiSafe_();
   const SHEET = "PlanningFinale";
@@ -383,13 +458,11 @@ SpreadsheetApp.flush();
  * un événement. Les autres cellules retrouvent une mise en forme normale.
  */
 function marquerDatesAvecRdvCalendrier_(sh, ss, ui, startRow, endRow, colDate) {
-  const CALENDAR_ID = "c_868360d47ecc6aca018d78b3d339ac81f9292e9c62f7aab3fc34469ada9432ae@group.calendar.google.com";
-
   if (endRow < startRow) return;
 
-  const cal = CalendarApp.getCalendarById(CALENDAR_ID);
+  const cal = CalendarApp.getCalendarById(CALENDAR_ID_TOURNEES);
   if (!cal) {
-    alertSafe_(ui, ss, "Erreur agenda", "Agenda introuvable ou inaccessible : " + CALENDAR_ID);
+    alertSafe_(ui, ss, "Erreur agenda", "Agenda introuvable ou inaccessible : " + CALENDAR_ID_TOURNEES);
     return;
   }
 

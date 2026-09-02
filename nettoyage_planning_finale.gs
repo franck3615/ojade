@@ -1,5 +1,5 @@
 /*******************************************************
- * NETTOYAGE AUTOMATIQUE DE PlanningFinale
+ * NETTOYAGE AUTOMATIQUE DE PlanningFinale (résidus)
  *
  * Cherche la DERNIÈRE ligne vide en colonne D, puis efface
  * tout le contenu des colonnes A à V à partir de cette ligne
@@ -7,9 +7,7 @@
  *
  * But : enlever les résidus (bloc récapitulatif financier,
  * anciennes données laissées par une exécution précédente...)
- * qui traînent sous la vraie liste de clients, et que
- * optimiserTournee() pourrait sinon prendre pour des lignes
- * clients (colonne H = adresse envoyée à Google Maps).
+ * qui traînent sous la vraie liste de clients.
  *******************************************************/
 function nettoyerResidusPlanningFinale_() {
 
@@ -36,8 +34,6 @@ function nettoyerResidusPlanningFinale_() {
     ).getValues();
 
   // Chercher la DERNIÈRE ligne vide en colonne D
-  // (on part du bas de la feuille ; la première case vide
-  // rencontrée en remontant est la dernière ligne vide)
   let ligneVide = -1;
 
   for (let i = colD.length - 1; i >= 0; i--) {
@@ -47,7 +43,6 @@ function nettoyerResidusPlanningFinale_() {
     }
   }
 
-  // Aucune ligne vide trouvée en colonne D : rien à nettoyer
   if (ligneVide === -1) return;
 
   const nbLignes = lastRow - ligneVide + 1;
@@ -64,6 +59,71 @@ function nettoyerResidusPlanningFinale_() {
 
 
 /*******************************************************
+ * VIDER LES ADRESSES CLIENTS QUI N'EN SONT MANIFESTEMENT PAS
+ *
+ * Une vraie adresse française contient presque toujours un
+ * chiffre (numéro de rue, code postal). Si le texte en colonne H
+ * n'en contient aucun ("hjhj", "test", "-", etc.), ce n'est pas
+ * une adresse exploitable : on vide la cellule et on prévient,
+ * plutôt que de laisser planter l'appel à Google Maps.
+ *
+ * Renvoie la liste des lignes vidées (pour affichage dans une
+ * alerte), tableau vide si rien à signaler.
+ *******************************************************/
+function nettoyerAdressesInvalidesPlanningFinale_() {
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName("PlanningFinale");
+
+  if (!sh) return [];
+
+  const START_ROW = 2;
+  const COL_CODE = 5;   // E = code client
+  const COL_ADR  = 8;   // H = adresse
+
+  const lastRow = sh.getLastRow();
+  if (lastRow < START_ROW) return [];
+
+  const nbLignes = lastRow - START_ROW + 1;
+
+  const codes =
+    sh.getRange(START_ROW, COL_CODE, nbLignes, 1).getValues();
+
+  const adresses =
+    sh.getRange(START_ROW, COL_ADR, nbLignes, 1).getValues();
+
+  const lignesVidees = [];
+
+  for (let i = 0; i < adresses.length; i++) {
+
+    const code = String(codes[i][0] || "").trim();
+    const adr  = String(adresses[i][0] || "").trim();
+
+    // Pas un client réel (pas de code) : on ne touche à rien,
+    // c'est le rôle de nettoyerResidusPlanningFinale_()
+    if (!code || !adr) continue;
+
+    // Une adresse plausible contient au moins un chiffre
+    // (numéro de rue et/ou code postal)
+    const contientChiffre = /\d/.test(adr);
+
+    if (!contientChiffre) {
+      sh.getRange(START_ROW + i, COL_ADR).clearContent();
+      lignesVidees.push(
+        "Ligne " + (START_ROW + i) + " (" + code + ") : \"" + adr + "\""
+      );
+    }
+  }
+
+  if (lignesVidees.length) {
+    SpreadsheetApp.flush();
+  }
+
+  return lignesVidees;
+}
+
+
+/*******************************************************
  * POINT DE DÉPART UNIQUE
  *
  * Demande à l'opérateur ce qu'il veut lancer, puis exécute :
@@ -74,8 +134,24 @@ function nettoyerResidusPlanningFinale_() {
 function demarrer() {
   const ui = SpreadsheetApp.getUi();
 
-  // Nettoyage automatique des résidus, AVANT toute autre chose
+  // 1. Nettoyage des résidus (bloc récap en bas de feuille)
   nettoyerResidusPlanningFinale_();
+
+  // 2. Vidage des adresses manifestement invalides (pas de chiffre)
+  const lignesVidees = nettoyerAdressesInvalidesPlanningFinale_();
+
+  if (lignesVidees.length) {
+    ui.alert(
+      "Adresses invalides vidées",
+      "Ces lignes avaient une adresse sans aucun chiffre " +
+      "(donc pas une vraie adresse) — elles ont été vidées " +
+      "automatiquement :\n\n" +
+      lignesVidees.join("\n") +
+      "\n\nComplète-les avec une vraie adresse avant de relancer " +
+      "l'optimisation, sinon ces clients ne seront pas inclus dans le calcul d'itinéraire.",
+      ui.ButtonSet.OK
+    );
+  }
 
   const choix = ui.alert(
     "Que veux-tu lancer ?",

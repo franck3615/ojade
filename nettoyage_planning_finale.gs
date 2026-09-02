@@ -1,13 +1,17 @@
 /*******************************************************
  * NETTOYAGE AUTOMATIQUE DE PlanningFinale (résidus)
  *
- * Cherche la DERNIÈRE ligne vide en colonne D, puis efface
- * tout le contenu des colonnes A à V à partir de cette ligne
- * jusqu'à la fin de la feuille.
+ * Les vrais clients occupent des lignes CONSÉCUTIVES à partir
+ * de la ligne 2, sans trou, avec toujours un nom en colonne D.
+ * On cherche donc la PREMIÈRE ligne vide en colonne D en partant
+ * du HAUT (ligne 2) : c'est forcément la ligne juste après le
+ * dernier vrai client. Tout ce qui est en dessous (bloc
+ * récapitulatif, résidus, lignes de test...) est effacé.
  *
- * But : enlever les résidus (bloc récapitulatif financier,
- * anciennes données laissées par une exécution précédente...)
- * qui traînent sous la vraie liste de clients.
+ * (Chercher en partant du BAS était le bug : une feuille a
+ * souvent des lignes vides tout en bas à cause d'un formatage
+ * résiduel, bien après le bloc récap — ça faisait tomber sur
+ * une ligne déjà vide, et rien n'était réellement nettoyé.)
  *******************************************************/
 function nettoyerResidusPlanningFinale_() {
 
@@ -33,10 +37,10 @@ function nettoyerResidusPlanningFinale_() {
       1
     ).getValues();
 
-  // Chercher la DERNIÈRE ligne vide en colonne D
+  // Chercher la PREMIÈRE ligne vide en colonne D, en partant du HAUT
   let ligneVide = -1;
 
-  for (let i = colD.length - 1; i >= 0; i--) {
+  for (let i = 0; i < colD.length; i++) {
     if (String(colD[i][0] || "").trim() === "") {
       ligneVide = START_ROW + i;
       break;

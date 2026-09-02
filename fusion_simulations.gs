@@ -543,6 +543,15 @@ function fusionnerSimulationsSelectionRouge() {
     );
 
 
+  // La feuille neuve n'a pas forcément autant de colonnes
+  // que PlanningFinale : on l'étend avant la copie, sinon
+  // "Those columns are out of bounds" sur le copyTo.
+  assurerColonnes_(
+    nouvelleFeuille,
+    nbColsCopie
+  );
+
+
   shPlan
     .getRange(
       1,

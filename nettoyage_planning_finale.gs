@@ -1,17 +1,18 @@
 /*******************************************************
  * NETTOYAGE AUTOMATIQUE DE PlanningFinale (résidus)
  *
- * Les vrais clients occupent des lignes CONSÉCUTIVES à partir
- * de la ligne 2, sans trou, avec toujours un nom en colonne D.
- * On cherche donc la PREMIÈRE ligne vide en colonne D en partant
- * du HAUT (ligne 2) : c'est forcément la ligne juste après le
- * dernier vrai client. Tout ce qui est en dessous (bloc
- * récapitulatif, résidus, lignes de test...) est effacé.
+ * Cherche la DERNIÈRE ligne vide en colonne D (en partant du
+ * bas), puis efface toutes les cellules non vides des colonnes
+ * A à V à partir de cette ligne.
  *
- * (Chercher en partant du BAS était le bug : une feuille a
- * souvent des lignes vides tout en bas à cause d'un formatage
- * résiduel, bien après le bloc récap — ça faisait tomber sur
- * une ligne déjà vide, et rien n'était réellement nettoyé.)
+ * PIÈGE ÉVITÉ : sh.getLastRow() peut renvoyer une ligne bien
+ * plus basse que la vraie dernière donnée si des lignes du bas
+ * ont juste du formatage résiduel (bordure, couleur de fond...)
+ * sans aucun contenu. Chercher "la dernière ligne vide" sur
+ * toute cette plage gonflée tombe alors sur une ligne déjà
+ * vide, hors sujet, et rien n'est réellement nettoyé.
+ * On borne donc d'abord la recherche à la vraie dernière ligne
+ * qui contient réellement quelque chose (n'importe où de A à V).
  *******************************************************/
 function nettoyerResidusPlanningFinale_() {
 
@@ -25,23 +26,43 @@ function nettoyerResidusPlanningFinale_() {
   const COL_A = 1;
   const COL_V = 22;
 
-  const lastRow = sh.getLastRow();
+  const lastRowBrut = sh.getLastRow();
 
-  if (lastRow < START_ROW) return;
+  if (lastRowBrut < START_ROW) return;
 
-  const colD =
+  const bloc =
     sh.getRange(
       START_ROW,
-      COL_D,
-      lastRow - START_ROW + 1,
-      1
+      COL_A,
+      lastRowBrut - START_ROW + 1,
+      COL_V - COL_A + 1
     ).getValues();
 
-  // Chercher la PREMIÈRE ligne vide en colonne D, en partant du HAUT
+  // Vraie dernière ligne avec un contenu réel (n'importe où de A à V)
+  let dernierRowAvecContenu = -1;
+
+  for (let i = bloc.length - 1; i >= 0; i--) {
+    const ligneNonVide = bloc[i].some(function(v) {
+      return String(v || "").trim() !== "";
+    });
+
+    if (ligneNonVide) {
+      dernierRowAvecContenu = START_ROW + i;
+      break;
+    }
+  }
+
+  // Aucun contenu du tout dans la feuille
+  if (dernierRowAvecContenu === -1) return;
+
+  // Chercher la DERNIÈRE ligne vide en colonne D, en partant du bas,
+  // mais seulement jusqu'à la vraie dernière ligne avec du contenu
+  const colD = bloc.map(function(ligne) { return ligne[COL_D - COL_A]; });
+
   let ligneVide = -1;
 
-  for (let i = 0; i < colD.length; i++) {
-    if (String(colD[i][0] || "").trim() === "") {
+  for (let i = dernierRowAvecContenu - START_ROW; i >= 0; i--) {
+    if (String(colD[i] || "").trim() === "") {
       ligneVide = START_ROW + i;
       break;
     }
@@ -49,7 +70,7 @@ function nettoyerResidusPlanningFinale_() {
 
   if (ligneVide === -1) return;
 
-  const nbLignes = lastRow - ligneVide + 1;
+  const nbLignes = dernierRowAvecContenu - ligneVide + 1;
 
   sh.getRange(
     ligneVide,

@@ -59,8 +59,15 @@ function optimiserTournee() {
   const rows = [];
   const addrs = [];
   for (let i = 0; i < data.length; i++) {
-    const adr = String(data[i][COL.ADR - 1] || "").trim();
-    if (!adr) continue;
+    const code = String(data[i][4] || "").trim();            // E = code client
+    const adr  = String(data[i][COL.ADR - 1] || "").trim();  // H = adresse
+
+    // Une vraie ligne client a TOUJOURS un code (E) ET une adresse (H).
+    // Ça exclut le bloc récapitulatif en bas de la feuille (GRAND TOTAL,
+    // TAUX HORAIRE, FRAIS CARBURANT...) qui n'a pas de code client mais
+    // peut avoir une valeur numérique qui tombe dans la colonne H.
+    if (!code || !adr) continue;
+
     rows.push(data[i]);
     addrs.push(adr);
   }

@@ -1,32 +1,38 @@
 // ============================================================================
-// FUSION DE SIMULATIONS V6.4 - VERSION CORRIGEE
+// FUSION DE SIMULATIONS - VERSION SIMPLIFIEE (SANS GOOGLE MAPS)
+//
+// Remplace la version V6.4 (calcul d'itinéraire Google Maps) par une
+// version plus simple : les clients retenus restent dans l'ordre où ils
+// apparaissent dans Clients_traitement, pas d'appel à Google Maps.
 //
 // PRINCIPE :
 // - AP rouge + AQ rouge = client retenu pour la fusion
-// - on NE déduit PLUS le nom de la feuille depuis le texte AQ
-// - on retrouve directement la vraie feuille grâce au CODE CLIENT
-//   présent en colonne E des feuilles simulationTournée_...
+// - Les autres clients appartenant aux mêmes simulations sources
+//   (mêmes que celles indiquées en AQ pour les clients retenus)
+//   se retrouvent avec AQ vide après la fusion.
 //
-// SECURITE :
-// - aucune ancienne feuille n'est supprimée avant création + contrôle
-// - les clients retenus reçoivent la nouvelle simulation dans AQ
-// - les clients non retenus appartenant aux simulations fusionnées ont AQ vide
+// CORRECTIF APPLIQUE :
+// - "Exception: Those columns are out of bounds." : le script demandait
+//   des plages fixes (43 colonnes sur Clients_traitement pour aller
+//   jusqu'à AQ, 23 colonnes sur PlanningFinale pour aller jusqu'à W)
+//   sans vérifier que ces feuilles avaient bien autant de colonnes dans
+//   leur grille. assurerColonnes_() étend la grille si besoin avant de
+//   lire/écrire, ce qui évite le plantage.
 // ============================================================================
 
 
 function fusionnerSimulationsSelectionRouge() {
-SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
+
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
 
   const shC = ss.getSheetByName("Clients_traitement");
   const shPlan = ss.getSheetByName("PlanningFinale");
-  const shP = ss.getSheetByName("Paramètres");
 
-  if (!shC || !shPlan || !shP) {
+  if (!shC || !shPlan) {
     ui.alert(
       "Erreur",
-      "Clients_traitement, PlanningFinale ou Paramètres est introuvable.",
+      "Clients_traitement ou PlanningFinale est introuvable.",
       ui.ButtonSet.OK
     );
     return;
@@ -34,166 +40,257 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
 
 
   // ============================================================
-  // 1. LIRE CLIENTS_TRAITEMENT
+  // SECURITE : ETENDRE LES FEUILLES SI ELLES N'ONT PAS ASSEZ
+  // DE COLONNES (sinon getRange plante avec "columns out of bounds")
+  //
+  // Clients_traitement doit aller au moins jusqu'à AQ (colonne 43)
+  // PlanningFinale doit aller au moins jusqu'à W (colonne 23)
+  // ============================================================
+
+  function assurerColonnes_(sh, nbColonnes) {
+
+    const actuelles = sh.getMaxColumns();
+
+    if (actuelles < nbColonnes) {
+      sh.insertColumnsAfter(
+        actuelles,
+        nbColonnes - actuelles
+      );
+    }
+  }
+
+  assurerColonnes_(shC, 43);
+  assurerColonnes_(shPlan, 23);
+
+
+  // ============================================================
+  // PETITE FONCTION LOCALE : DETECTER LE ROUGE
+  // ============================================================
+
+  function estRouge(couleur) {
+
+    couleur = String(couleur || "")
+      .trim()
+      .toLowerCase();
+
+    const m = couleur.match(
+      /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/
+    );
+
+    if (!m) return false;
+
+    const r = parseInt(m[1], 16);
+    const g = parseInt(m[2], 16);
+    const b = parseInt(m[3], 16);
+
+    return (
+      r >= 170 &&
+      g <= 100 &&
+      b <= 100 &&
+      r >= g + 80 &&
+      r >= b + 80
+    );
+  }
+
+
+  // ============================================================
+  // NORMALISER UNE VALEUR AQ
+  // ============================================================
+
+  function normaliserAQ(valeur) {
+
+    return String(valeur || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, " ");
+  }
+
+
+  // ============================================================
+  // CONVERTIR :
+  //
+  // SIMULATION 29/08/2026 - 4
+  // ->
+  // simulationTournée_29-08-2026_4
+  //
+  // SIMULATION 02/09/2026 - 1
+  // ->
+  // simulationTournée_02-09-2026
+  // ============================================================
+
+  function etiquetteVersFeuille(etiquette) {
+
+    const m =
+      String(etiquette || "").trim().match(
+        /^SIMULATION\s+(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d+)$/i
+      );
+
+    if (!m) return "";
+
+    const numero = parseInt(m[4], 10);
+
+    let nom =
+      "simulationTournée_" +
+      m[1] + "-" +
+      m[2] + "-" +
+      m[3];
+
+    if (numero > 1) {
+      nom += "_" + numero;
+    }
+
+    return nom;
+  }
+
+
+  // ============================================================
+  // 1. LIRE Clients_traitement
   // ============================================================
 
   const lastRow = shC.getLastRow();
 
   if (lastRow < 2) {
-    ui.alert("Fusion", "Aucun client trouvé.", ui.ButtonSet.OK);
+    ui.alert("Aucun client.");
     return;
   }
 
   const nbLignes = lastRow - 1;
 
   // A:AQ
-  const data = shC.getRange(
-    2,
-    1,
-    nbLignes,
-    43
-  ).getValues();
+  const data =
+    shC.getRange(
+      2,
+      1,
+      nbLignes,
+      43
+    ).getValues();
 
-  // Couleurs AP:AQ
-  const couleurs = shC.getRange(
-    2,
-    42,
-    nbLignes,
-    2
-  ).getBackgrounds();
+  // AP:AQ
+  const backgrounds =
+    shC.getRange(
+      2,
+      42,
+      nbLignes,
+      2
+    ).getBackgrounds();
 
 
   // ============================================================
-  // 2. SELECTION = UNIQUEMENT AP ROUGE + AQ ROUGE
+  // 2. DETECTER LES CLIENTS AP + AQ ROUGES
   // ============================================================
 
-  const clientsSelectionnes = [];
-  const codesSelectionnes = {};
-  const etiquettesSources = {};
+  const retenus = [];
+  const codesRetenus = {};
+  const sourcesAQ = {};
 
 
   for (let i = 0; i < data.length; i++) {
 
-    const couleurAP =
-      normaliserCouleurFusion_(couleurs[i][0]);
+    const rougeAP =
+      estRouge(backgrounds[i][0]);
 
-    const couleurAQ =
-      normaliserCouleurFusion_(couleurs[i][1]);
+    const rougeAQ =
+      estRouge(backgrounds[i][1]);
 
-
-    // SEULE REGLE DE SELECTION
-    if (
-      !estRougeFusion_(couleurAP) ||
-      !estRougeFusion_(couleurAQ)
-    ) {
+    // Les DEUX doivent être rouges
+    if (!rougeAP || !rougeAQ) {
       continue;
     }
 
 
-    const codeClient =
+    const code =
       String(data[i][0] || "").trim();       // A
 
-    const nomClient =
+    const client =
       String(data[i][2] || "").trim();       // C
 
     const rue =
       String(data[i][14] || "").trim();      // O
 
     const cp =
-      nettoyerCPV6_(data[i][17]);            // R
+      String(data[i][17] || "").trim();      // R
 
     const ville =
       String(data[i][18] || "").trim();      // S
 
-    const typeClient =
+    const equipement =
       String(data[i][21] || "").trim();      // V
 
     const ap =
-      toDateOnly_(data[i][41]);              // AP
+      data[i][41];                           // AP
 
-    const aqOriginal =
+    const aq =
       String(data[i][42] || "").trim();      // AQ
 
 
-    /*
-     * Une ligne AP+AQ rouge doit pouvoir être transformée
-     * en client de simulation.
-     *
-     * Si une donnée indispensable manque, on n'ignore PAS
-     * silencieusement le client : on arrête plus bas.
-     */
+    if (!code || !client || !aq) {
+      continue;
+    }
+
+
+    if (
+      aq.toUpperCase().indexOf("SIMULATION") !== 0
+    ) {
+      continue;
+    }
+
+
+    // Pas deux fois le même code
+    if (codesRetenus[code]) {
+      continue;
+    }
+
+    codesRetenus[code] = true;
+
 
     const adresse =
-      [
-        rue,
-        cp,
-        ville
-      ]
-      .filter(function(v) {
-        return String(v || "").trim() !== "";
-      })
-      .join(" ")
-      .trim();
+      [rue, cp, ville]
+        .filter(function(v) {
+          return String(v || "").trim() !== "";
+        })
+        .join(" ")
+        .trim();
 
 
-    const dep =
-      cp ? extraireDepCPV6_(cp) : "";
+    retenus.push({
 
+      ligne: i + 2,
 
-    const nom =
-      [
-        nomClient,
-        typeClient
-      ]
-      .filter(function(v) {
-        return String(v || "").trim() !== "";
-      })
-      .join(" / ");
+      code: code,
 
+      client: client,
 
-    clientsSelectionnes.push({
+      equipement: equipement,
 
-      sourceRow: i + 2,
-
-      codeClient: codeClient,
-
-      nom: nom,
-
-      nomClient: nomClient,
-
-      typeClient: typeClient,
+      nom:
+        equipement
+          ? client + " / " + equipement
+          : client,
 
       adresse: adresse,
 
-      cp: cp,
-
-      ville: ville,
-
-      dep: dep,
-
       ap: ap,
 
-      aqOriginal: aqOriginal
+      aqSource: aq
 
     });
 
 
-    // AQ nous donne DIRECTEMENT la simulation source
-    if (aqOriginal) {
-      etiquettesSources[aqOriginal] = true;
-    }
+    sourcesAQ[
+      normaliserAQ(aq)
+    ] = aq;
   }
 
 
   // ============================================================
-  // 3. AUCUNE SELECTION
+  // 3. CONTROLES
   // ============================================================
 
-  if (!clientsSelectionnes.length) {
+  if (!retenus.length) {
 
     ui.alert(
       "Fusion impossible",
-      "Aucune ligne avec AP ET AQ rouges n'a été trouvée.",
+      "Aucun client avec AP ET AQ rouges.",
       ui.ButtonSet.OK
     );
 
@@ -201,141 +298,15 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
   }
 
 
-  // ============================================================
-  // 4. CONTROLE STRICT DES CLIENTS ROUGES
-  //
-  // IMPORTANT :
-  // ON NE SUPPRIME JAMAIS SILENCIEUSEMENT UNE LIGNE ROUGE.
-  // ============================================================
-
-  const erreurs = [];
+  const listeSources =
+    Object.keys(sourcesAQ);
 
 
-  clientsSelectionnes.forEach(function(c) {
-
-    const manques = [];
-
-    if (!c.codeClient) {
-      manques.push("code client A");
-    }
-
-    if (!c.nomClient) {
-      manques.push("nom client C");
-    }
-
-    if (!c.cp) {
-      manques.push("code postal R");
-    }
-
-    if (!c.adresse) {
-      manques.push("adresse");
-    }
-
-    if (!c.ap) {
-      manques.push("date AP");
-    }
-
-    if (!c.aqOriginal) {
-      manques.push("simulation source AQ");
-    }
-
-    if (
-      c.aqOriginal &&
-      c.aqOriginal.toLowerCase().indexOf("simulation") !== 0
-    ) {
-      manques.push("AQ n'est pas une simulation");
-    }
-
-
-    if (manques.length) {
-
-      erreurs.push(
-        "Ligne " +
-        c.sourceRow +
-        " - " +
-        (c.nomClient || c.codeClient || "client") +
-        " : " +
-        manques.join(", ")
-      );
-    }
-  });
-
-
-  if (erreurs.length) {
-
-    ui.alert(
-      "Fusion annulée",
-      clientsSelectionnes.length +
-      " ligne(s) AP+AQ rouges ont été détectées.\n\n" +
-      "Mais certaines contiennent une donnée indispensable incorrecte :\n\n" +
-      erreurs.join("\n") +
-      "\n\nAUCUNE modification n'a été effectuée.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  // ============================================================
-  // 5. CONTROLE DES DOUBLONS
-  // ============================================================
-
-  const doublons = [];
-
-
-  clientsSelectionnes.forEach(function(c) {
-
-    if (codesSelectionnes[c.codeClient]) {
-
-      doublons.push(
-        c.codeClient +
-        " - " +
-        c.nomClient
-      );
-
-    } else {
-
-      codesSelectionnes[c.codeClient] = true;
-    }
-  });
-
-
-  if (doublons.length) {
-
-    ui.alert(
-      "Fusion annulée",
-      "Des codes clients sont présents plusieurs fois dans la sélection rouge :\n\n" +
-      doublons.join("\n") +
-      "\n\nAUCUNE modification n'a été effectuée.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-    // ============================================================
-  // 6. IDENTIFIER LES SIMULATIONS SOURCES A PARTIR DE AQ
-  //
-  // AQ EST LA REFERENCE.
-  // SI UNE ANCIENNE FEUILLE N'EXISTE PLUS,
-  // CELA NE BLOQUE PAS LA FUSION.
-  // ============================================================
-
-  const feuillesSources = [];
-  const nomsSources = [];
-
-  const etiquettesSourcesListe =
-    Object.keys(etiquettesSources);
-
-
-  // Il faut au moins 2 simulations indiquées dans AQ
-  if (etiquettesSourcesListe.length < 2) {
+  if (listeSources.length < 2) {
 
     ui.alert(
       "Fusion impossible",
-      "Les cellules AP+AQ rouges appartiennent à moins de deux simulations sources.",
+      "Les clients retenus ne proviennent pas d'au moins deux simulations.",
       ui.ButtonSet.OK
     );
 
@@ -343,47 +314,34 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
   }
 
 
-  etiquettesSourcesListe.forEach(function(etiquette) {
-
-    const nomFeuille =
-      convertirEtiquetteAQVersNomFeuilleFusion_(etiquette);
-
-    nomsSources.push(nomFeuille);
-
-
-    // Si la feuille existe encore, on la mémorise
-    // pour la supprimer à la toute fin.
-    const sh =
-      ss.getSheetByName(nomFeuille);
-
-    if (sh) {
-      feuillesSources.push(sh);
-    }
-  });
   // ============================================================
-  // 7. CONFIRMATION
+  // 4. CONFIRMATION
   // ============================================================
 
-  const confirmation = ui.alert(
+  const confirmation =
+    ui.alert(
+      "Fusion des simulations",
 
-    "Fusion des simulations",
+      retenus.length +
+      " client(s) AP + AQ rouges ont été détectés.\n\n" +
 
-    clientsSelectionnes.length +
-    " CLIENT(S) AP + AQ ROUGES ONT ETE DETECTES.\n\n" +
+      "Ces " +
+      retenus.length +
+      " clients seront TOUS conservés.\n\n" +
 
-    "Ces " +
-    clientsSelectionnes.length +
-    " clients seront TOUS placés dans la nouvelle simulation.\n\n" +
+      "Simulations sources :\n\n" +
+      listeSources
+        .map(function(k) {
+          return sourcesAQ[k];
+        })
+        .join("\n") +
 
-    "Simulations sources :\n\n" +
-    nomsSources.join("\n") +
+      "\n\nTous les AUTRES clients de ces simulations auront AQ VIDE.\n\n" +
 
-    "\n\nAucun client rouge ne sera volontairement éliminé.\n\n" +
+      "Continuer ?",
 
-    "Continuer ?",
-
-    ui.ButtonSet.YES_NO
-  );
+      ui.ButtonSet.YES_NO
+    );
 
 
   if (confirmation !== ui.Button.YES) {
@@ -392,187 +350,244 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
 
 
   // ============================================================
-  // 8. DATE DE LA NOUVELLE SIMULATION
+  // 5. DATE DU JOUR
   // ============================================================
 
-  const dateJour = new Date();
+  const aujourdHui = new Date();
 
-  dateJour.setHours(0, 0, 0, 0);
-
-
-  // ============================================================
-  // 9. CALCUL GOOGLE
-  // ============================================================
-
-  const depOrigine =
-    normaliserDepV6_(
-      shP.getRange("B12").getValue()
-    );
-
-
-  if (!depOrigine) {
-
-    ui.alert(
-      "Fusion annulée",
-      "Paramètres!B12 ne contient pas le département de départ.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  const origineGoogle =
-    depOrigine + ", France";
-
-
-  const route =
-    calculerRouteV6_(
-      origineGoogle,
-      clientsSelectionnes
-    );
-
-
-  if (!route) {
-
-    ui.alert(
-      "Fusion annulée",
-      "Google Maps n'a pas pu calculer l'itinéraire.\n\n" +
-      "Aucune simulation source n'a été supprimée.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  const clientsOrdonnes =
-    appliquerOrdreGoogleV6_(
-      clientsSelectionnes,
-      route.ordre
-    );
-
-
-  // SECURITE ABSOLUE
-  if (
-    clientsOrdonnes.length !==
-    clientsSelectionnes.length
-  ) {
-
-    ui.alert(
-      "Fusion annulée",
-      clientsSelectionnes.length +
-      " clients ont été sélectionnés mais seulement " +
-      clientsOrdonnes.length +
-      " sont revenus du calcul Google.\n\n" +
-      "AUCUNE modification n'a été effectuée.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  // ============================================================
-  // 10. ECRIRE LES CLIENTS DANS PLANNINGFINALE
-  // ============================================================
-
-  ecrireSelectionV6_(
-    shPlan,
-    shP,
-    clientsOrdonnes,
-    dateJour
+  aujourdHui.setHours(
+    0,
+    0,
+    0,
+    0
   );
 
 
+  const tz =
+    ss.getSpreadsheetTimeZone();
+
+
+  const dateNom =
+    Utilities.formatDate(
+      aujourdHui,
+      tz,
+      "dd-MM-yyyy"
+    );
+
+
+  const dateAQ =
+    Utilities.formatDate(
+      aujourdHui,
+      tz,
+      "dd/MM/yyyy"
+    );
+
+
+  // ============================================================
+  // 6. TROUVER LE NOM DE LA NOUVELLE SIMULATION
+  // ============================================================
+
+  const base =
+    "simulationTournée_" +
+    dateNom;
+
+
+  let nomNouvelle =
+    base;
+
+
+  let numeroNouvelle =
+    1;
+
+
+  while (
+    ss.getSheetByName(
+      nomNouvelle
+    )
+  ) {
+
+    numeroNouvelle++;
+
+    nomNouvelle =
+      base +
+      "_" +
+      numeroNouvelle;
+  }
+
+
+  const nouvelleValeurAQ =
+    "SIMULATION " +
+    dateAQ +
+    " - " +
+    numeroNouvelle;
+
+
+  // ============================================================
+  // 7. PREPARER PlanningFinale
+  //
+  // Aucun Google Maps.
+  // Les clients restent dans l'ordre de Clients_traitement.
+  // ============================================================
+
+  const lastPlan =
+    Math.max(
+      shPlan.getLastRow(),
+      2
+    );
+
+
+  shPlan
+    .getRange(
+      2,
+      1,
+      lastPlan - 1,
+      23
+    )
+    .clearContent();
+
+
+  shPlan
+    .getRange("B2")
+    .setValue(
+      aujourdHui
+    );
+
+
+  retenus.forEach(function(c, index) {
+
+    const ligne =
+      index + 2;
+
+
+    // D = Nom
+    shPlan
+      .getRange(
+        ligne,
+        4
+      )
+      .setValue(
+        c.nom
+      );
+
+
+    // E = Code client
+    shPlan
+      .getRange(
+        ligne,
+        5
+      )
+      .setValue(
+        c.code
+      );
+
+
+    // G = durée
+    shPlan
+      .getRange(
+        ligne,
+        7
+      )
+      .setValue(
+        90
+      );
+
+
+    // H = adresse
+    shPlan
+      .getRange(
+        ligne,
+        8
+      )
+      .setValue(
+        c.adresse
+      );
+
+
+    // K = date AP
+    shPlan
+      .getRange(
+        ligne,
+        11
+      )
+      .setValue(
+        c.ap
+      );
+
+  });
+
+
   SpreadsheetApp.flush();
 
 
   // ============================================================
-  // 11. CONTROLE IMMEDIAT DE PLANNINGFINALE
-  //
-  // N ROUGES = N CLIENTS DANS PLANNINGFINALE
+  // 8. CREER LA NOUVELLE FEUILLE
   // ============================================================
-
-  const codesPlanning = {};
-
-
-  const valeursPlanning =
-    shPlan.getRange(
-      2,
-      5,
-      clientsSelectionnes.length,
-      1
-    ).getValues();
-
-
-  valeursPlanning.forEach(function(ligne) {
-
-    const code =
-      String(ligne[0] || "").trim();
-
-    if (code) {
-      codesPlanning[code] = true;
-    }
-  });
-
-
-  const manquantsPlanning =
-    clientsSelectionnes.filter(function(c) {
-
-      return !codesPlanning[c.codeClient];
-    });
-
-
-  if (
-    manquantsPlanning.length ||
-    Object.keys(codesPlanning).length !==
-      clientsSelectionnes.length
-  ) {
-
-    ui.alert(
-      "Fusion annulée",
-      "CONTROLE DE SECURITE ECHEC.\n\n" +
-      "Clients rouges : " +
-      clientsSelectionnes.length +
-      "\n" +
-      "Clients écrits dans PlanningFinale : " +
-      Object.keys(codesPlanning).length +
-      "\n\n" +
-      "Aucune ancienne simulation n'a été supprimée.",
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  // ============================================================
-  // 12. CREER LA NOUVELLE SIMULATION
-  // ============================================================
-
-  const nomNouvelleFeuille =
-    archiverPlanningSimulationV6_(
-      ss,
-      shPlan,
-      dateJour
-    );
-
 
   const nouvelleFeuille =
-    ss.getSheetByName(nomNouvelleFeuille);
-
-
-  if (!nouvelleFeuille) {
-
-    ui.alert(
-      "ERREUR",
-      "La nouvelle simulation n'a pas été créée.\n\n" +
-      "Les anciennes simulations sont conservées.",
-      ui.ButtonSet.OK
+    ss.insertSheet(
+      nomNouvelle
     );
 
-    return;
+
+  const nbRowsCopie =
+    Math.max(
+      shPlan.getLastRow(),
+      1
+    );
+
+
+  const nbColsCopie =
+    Math.max(
+      shPlan.getLastColumn(),
+      1
+    );
+
+
+  shPlan
+    .getRange(
+      1,
+      1,
+      nbRowsCopie,
+      nbColsCopie
+    )
+    .copyTo(
+      nouvelleFeuille
+        .getRange(
+          1,
+          1,
+          nbRowsCopie,
+          nbColsCopie
+        )
+    );
+
+
+  // Largeurs de colonnes
+  for (
+    let col = 1;
+    col <= nbColsCopie;
+    col++
+  ) {
+
+    nouvelleFeuille
+      .setColumnWidth(
+        col,
+        shPlan.getColumnWidth(col)
+      );
+  }
+
+
+  // Hauteurs des lignes
+  for (
+    let ligne = 1;
+    ligne <= nbRowsCopie;
+    ligne++
+  ) {
+
+    nouvelleFeuille
+      .setRowHeight(
+        ligne,
+        shPlan.getRowHeight(ligne)
+      );
   }
 
 
@@ -580,84 +595,71 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
 
 
   // ============================================================
-  // 13. CONTROLE ABSOLU DE LA NOUVELLE FEUILLE
-  //
-  // ON COMPARE EXACTEMENT LES CODES.
+  // 9. VERIFIER QUE LES CLIENTS DE LA NOUVELLE SIMULATION
+  //    SONT EXACTEMENT LES CLIENTS RETENUS
   // ============================================================
 
-  const codesNouvelle = {};
-
-
-  const lastNouvelle =
-    nouvelleFeuille.getLastRow();
-
-
-  if (lastNouvelle >= 2) {
-
-    const valeurs =
-      nouvelleFeuille.getRange(
+  const codesNouvelle =
+    nouvelleFeuille
+      .getRange(
         2,
         5,
-        lastNouvelle - 1,
+        retenus.length,
         1
-      ).getValues();
+      )
+      .getValues()
+      .map(function(ligne) {
+
+        return String(
+          ligne[0] || ""
+        ).trim();
+
+      })
+      .filter(function(code) {
+
+        return code !== "";
+
+      });
 
 
-    valeurs.forEach(function(ligne) {
-
-      const code =
-        String(ligne[0] || "").trim();
-
-      if (code) {
-        codesNouvelle[code] = true;
-      }
-    });
-  }
+  const ensembleNouvelle = {};
 
 
-  const codesAttendus =
-    clientsSelectionnes.map(function(c) {
-      return c.codeClient;
-    });
+  codesNouvelle.forEach(function(code) {
+    ensembleNouvelle[code] = true;
+  });
 
 
-  const codesManquants =
-    codesAttendus.filter(function(code) {
-      return !codesNouvelle[code];
-    });
+  let controleCodesOK =
+    codesNouvelle.length ===
+    retenus.length;
 
 
-  const codesEnTrop =
-    Object.keys(codesNouvelle).filter(function(code) {
-      return !codesSelectionnes[code];
-    });
+  retenus.forEach(function(c) {
+
+    if (!ensembleNouvelle[c.code]) {
+      controleCodesOK = false;
+    }
+
+  });
 
 
-  if (
-    codesManquants.length ||
-    codesEnTrop.length ||
-    Object.keys(codesNouvelle).length !==
-      clientsSelectionnes.length
-  ) {
+  if (!controleCodesOK) {
 
-    ss.deleteSheet(nouvelleFeuille);
+    ss.deleteSheet(
+      nouvelleFeuille
+    );
+
 
     ui.alert(
       "Fusion annulée",
 
-      "CONTROLE DE SECURITE ECHEC.\n\n" +
+      "La nouvelle simulation ne contient pas exactement les " +
+      retenus.length +
+      " clients retenus.\n\n" +
 
-      "Clients AP+AQ rouges : " +
-      clientsSelectionnes.length +
-
-      "\nClients trouvés dans la nouvelle simulation : " +
-      Object.keys(codesNouvelle).length +
-
-      "\n\nLa nouvelle feuille incorrecte a été supprimée." +
-
-      "\nLes anciennes simulations sont conservées." +
-
-      "\nAQ n'a pas été modifié.",
+      "Elle a été supprimée.\n" +
+      "AQ n'a pas été modifié.",
 
       ui.ButtonSet.OK
     );
@@ -667,172 +669,197 @@ SpreadsheetApp.getUi().alert("TEST : la fonction de fusion démarre bien");
 
 
   // ============================================================
-  // 14. NOUVELLE ETIQUETTE AQ
+  // 10. PREPARER AQ
   // ============================================================
 
-  const etiquetteNouvelleAQ =
-    convertirNomFeuilleVersEtiquetteAQFusion_(
-      nomNouvelleFeuille
+  const aqRange =
+    shC.getRange(
+      2,
+      43,
+      nbLignes,
+      1
     );
 
 
-  // Le numéro de simulation est porté par l'étiquette elle-même
-  // ("SIMULATION jj/mm/aaaa - N") : on ne peut pas s'en passer,
-  // sinon "numero" est indéfini plus bas (bug V6.4 corrigé ici).
-  const matchNumeroAQ =
-    etiquetteNouvelleAQ.match(/-\s*(\d+)\s*$/);
-
-  const numero =
-    matchNumeroAQ ? parseInt(matchNumeroAQ[1], 10) : 1;
+  const valeursAQ =
+    aqRange.getValues();
 
 
+  const couleursAQ =
+    aqRange.getBackgrounds();
+
+
+  // Couleur pastel simple
   const palette = [
-  "#fff2cc",
-  "#d9ead3",
-  "#fce5cd",
-  "#d9eaf7",
-  "#eadcf8",
-  "#d0e0e3"
-];
+    "#fff2cc",
+    "#d9ead3",
+    "#d9eaf7",
+    "#fce5cd",
+    "#eadcf8",
+    "#f4ddec"
+  ];
 
-const couleurNouvelle =
-  palette[(numero - 1) % palette.length];
+
+  const couleurNouvelle =
+    palette[
+      (numeroNouvelle - 1) %
+      palette.length
+    ];
 
 
   // ============================================================
-  // 15. VIDER AQ DES CLIENTS DES SIMULATIONS SOURCES
-  //
-  // IMPORTANT :
-  // ON SE BASE SUR LE TEXTE AQ.
-  // ON NE RECHERCHE PAS LES CLIENTS DANS LES ANCIENNES FEUILLES.
+  // 11. VIDER AQ POUR TOUS LES CLIENTS
+  //     DES SIMULATIONS SOURCES
   // ============================================================
 
-  const sourcesNormalisees = {};
+  for (
+    let i = 0;
+    i < valeursAQ.length;
+    i++
+  ) {
 
-
-  Object.keys(etiquettesSources).forEach(function(v) {
-
-    sourcesNormalisees[
-      String(v).trim().toLowerCase()
-    ] = true;
-  });
-
-
-  for (let i = 0; i < data.length; i++) {
-
-    const aqActuel =
-      String(data[i][42] || "")
-        .trim();
-
-    if (!aqActuel) {
-      continue;
-    }
+    const valeurActuelle =
+      normaliserAQ(
+        valeursAQ[i][0]
+      );
 
 
     if (
-      !sourcesNormalisees[
-        aqActuel.toLowerCase()
+      sourcesAQ[
+        valeurActuelle
       ]
     ) {
-      continue;
+
+      valeursAQ[i][0] =
+        "";
+
+      couleursAQ[i][0] =
+        "#ffffff";
     }
-
-
-    // Tous les clients appartenant aux anciennes
-    // simulations sont d'abord libérés.
-    shC
-      .getRange(i + 2, 43)
-      .clearContent()
-      .setBackground(null)
-      .setFontColor("#000000");
   }
 
 
   // ============================================================
-  // 16. REAFFECTER LES CLIENTS RETENUS
+  // 12. REAFFECTER UNIQUEMENT LES CLIENTS RETENUS
   // ============================================================
 
-  clientsSelectionnes.forEach(function(c) {
+  retenus.forEach(function(c) {
 
-    // Nouvelle simulation dans AQ
-    shC
-      .getRange(c.sourceRow, 43)
-      .setValue(etiquetteNouvelleAQ)
-      .setBackground(couleurNouvelle)
-      .setFontColor("#000000");
+    const index =
+      c.ligne - 2;
 
 
-    // Enlever le rouge de AP
-    shC
-      .getRange(c.sourceRow, 42)
-      .setBackground(null);
+    valeursAQ[index][0] =
+      nouvelleValeurAQ;
+
+
+    couleursAQ[index][0] =
+      couleurNouvelle;
+
   });
+
+
+  // ============================================================
+  // 13. ECRIRE AQ EN UNE SEULE FOIS
+  // ============================================================
+
+  aqRange
+    .setValues(
+      valeursAQ
+    );
+
+
+  aqRange
+    .setBackgrounds(
+      couleursAQ
+    );
 
 
   SpreadsheetApp.flush();
 
 
   // ============================================================
-  // 17. VERIFICATION AQ DES CLIENTS RETENUS
+  // 14. CONTROLE FINAL AQ
   // ============================================================
 
-  const erreursAQ = [];
+  const aqControle =
+    aqRange.getValues();
 
 
-  clientsSelectionnes.forEach(function(c) {
+  let controleAQOK =
+    true;
 
-    const valeur =
+
+  for (
+    let i = 0;
+    i < aqControle.length;
+    i++
+  ) {
+
+    const code =
       String(
-        shC
-          .getRange(c.sourceRow, 43)
-          .getValue() || ""
+        data[i][0] || ""
       ).trim();
 
 
-    if (valeur !== etiquetteNouvelleAQ) {
-
-      erreursAQ.push(
-        c.codeClient +
-        " - " +
-        c.nomClient
+    const aqAvant =
+      normaliserAQ(
+        data[i][42]
       );
+
+
+    const aqApres =
+      String(
+        aqControle[i][0] || ""
+      ).trim();
+
+
+    // Client retenu :
+    // doit avoir la nouvelle simulation
+    if (
+      codesRetenus[code]
+    ) {
+
+      if (
+        aqApres !==
+        nouvelleValeurAQ
+      ) {
+
+        controleAQOK =
+          false;
+      }
+
+      continue;
     }
-  });
 
 
-  if (erreursAQ.length) {
+    // Client NON retenu appartenant
+    // à une simulation source :
+    // AQ doit être VIDE
+    if (
+      sourcesAQ[
+        aqAvant
+      ]
+    ) {
+
+      if (aqApres !== "") {
+
+        controleAQOK =
+          false;
+      }
+    }
+  }
+
+
+  if (!controleAQOK) {
 
     ui.alert(
       "ATTENTION",
 
-      "La nouvelle simulation a été créée mais AQ n'est pas conforme pour certains clients.\n\n" +
+      "La nouvelle simulation a été créée, " +
+      "mais le contrôle final de AQ n'est pas conforme.\n\n" +
 
-      erreursAQ.join("\n") +
-
-      "\n\nPAR SECURITE, les anciennes simulations n'ont PAS été supprimées.",
-
-      ui.ButtonSet.OK
-    );
-
-    return;
-  }
-
-
-  // ============================================================
-  // 18. DERNIER CONTROLE AVANT SUPPRESSION
-  // ============================================================
-
-  if (
-    Object.keys(codesNouvelle).length !==
-    clientsSelectionnes.length
-  ) {
-
-    ui.alert(
-      "SECURITE",
-
-      "Le nombre de clients de la nouvelle simulation ne correspond plus au nombre sélectionné.\n\n" +
-
-      "Les anciennes simulations NE SONT PAS supprimées.",
+      "Les anciennes simulations NE SERONT PAS supprimées.",
 
       ui.ButtonSet.OK
     );
@@ -842,20 +869,20 @@ const couleurNouvelle =
 
 
   // ============================================================
-  // 19. SUPPRIMER LES ANCIENNES SIMULATIONS
-  //
-  // C'EST LA TOUTE DERNIERE OPERATION.
+  // 15. RETIRER LE ROUGE DE AP DES CLIENTS RETENUS
   // ============================================================
 
-  feuillesSources.forEach(function(sh) {
+  retenus.forEach(function(c) {
 
-    if (
-      sh.getSheetId() !==
-      nouvelleFeuille.getSheetId()
-    ) {
+    shC
+      .getRange(
+        c.ligne,
+        42
+      )
+      .setBackground(
+        null
+      );
 
-      ss.deleteSheet(sh);
-    }
   });
 
 
@@ -863,131 +890,77 @@ const couleurNouvelle =
 
 
   // ============================================================
-  // 20. TERMINE
+  // 16. SUPPRIMER LES ANCIENNES FEUILLES SOURCES
+  //
+  // Une feuille déjà absente n'empêche pas la fusion.
+  // ============================================================
+
+  let nbSupprimees =
+    0;
+
+
+  listeSources.forEach(function(k) {
+
+    const nomSource =
+      etiquetteVersFeuille(
+        sourcesAQ[k]
+      );
+
+
+    if (!nomSource) {
+      return;
+    }
+
+
+    const shSource =
+      ss.getSheetByName(
+        nomSource
+      );
+
+
+    if (
+      shSource &&
+      shSource.getSheetId() !==
+      nouvelleFeuille.getSheetId()
+    ) {
+
+      ss.deleteSheet(
+        shSource
+      );
+
+      nbSupprimees++;
+    }
+
+  });
+
+
+  SpreadsheetApp.flush();
+
+
+  // ============================================================
+  // 17. TERMINE
   // ============================================================
 
   nouvelleFeuille.activate();
 
 
   ui.alert(
-
     "Fusion terminée",
 
     "Nouvelle simulation :\n" +
-    nomNouvelleFeuille +
+    nomNouvelle +
+    "\n\n" +
 
-    "\n\nClients AP+AQ rouges détectés : " +
-    clientsSelectionnes.length +
+    "Clients fusionnés : " +
+    retenus.length +
+    "\n\n" +
 
-    "\nClients présents dans la nouvelle simulation : " +
-    Object.keys(codesNouvelle).length +
+    "Anciennes simulations supprimées : " +
+    nbSupprimees +
+    "\n\n" +
 
-    "\n\nAnciennes simulations supprimées : " +
-    feuillesSources.length +
-
-    "\n\nLes clients retenus sont affectés à la nouvelle simulation." +
-
-    "\nLes autres clients des simulations sources ont maintenant AQ vide.",
+    "Tous les autres clients des simulations sources ont maintenant AQ vide.",
 
     ui.ButtonSet.OK
-  );
-}
-function normaliserCouleurFusion_(couleur) {
-
-  return String(couleur || "")
-    .trim()
-    .toLowerCase();
-}
-
-
-function estRougeFusion_(couleur) {
-
-  couleur = normaliserCouleurFusion_(couleur);
-
-  // Format attendu : #rrggbb
-  const match = couleur.match(
-    /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/
-  );
-
-  if (!match) {
-    return false;
-  }
-
-  const r = parseInt(match[1], 16);
-  const g = parseInt(match[2], 16);
-  const b = parseInt(match[3], 16);
-
-  // Rouge suffisamment marqué
-  return (
-    r >= 170 &&
-    g <= 100 &&
-    b <= 100 &&
-    r >= g + 80 &&
-    r >= b + 80
-  );
-}
-
-function convertirEtiquetteAQVersNomFeuilleFusion_(etiquette) {
-
-  const match = String(etiquette || "")
-    .trim()
-    .match(
-      /^SIMULATION\s+(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d+)$/i
-    );
-
-  if (!match) {
-    throw new Error(
-      "Etiquette AQ invalide : " + etiquette
-    );
-  }
-
-  const numero = parseInt(match[4], 10);
-
-  const base =
-    "simulationTournée_" +
-    match[1] + "-" +
-    match[2] + "-" +
-    match[3];
-
-  // SIMULATION xx/xx/xxxx - 1
-  // correspond à la feuille sans suffixe _1
-  if (numero === 1) {
-    return base;
-  }
-
-  // SIMULATION xx/xx/xxxx - 2 → ..._2
-  // SIMULATION xx/xx/xxxx - 3 → ..._3
-  return base + "_" + numero;
-}
-function convertirNomFeuilleVersEtiquetteAQFusion_(nomFeuille) {
-
-  const match = String(nomFeuille || "")
-    .trim()
-    .match(
-      /^simulationTournée_(\d{2})-(\d{2})-(\d{4})(?:_(\d+))?$/i
-    );
-
-  if (!match) {
-    throw new Error(
-      "Nom de feuille simulation invalide : " + nomFeuille
-    );
-  }
-
-  const jour = match[1];
-  const mois = match[2];
-  const annee = match[3];
-
-  // Pas de suffixe = simulation n°1
-  const numero = match[4]
-    ? parseInt(match[4], 10)
-    : 1;
-
-  return (
-    "SIMULATION " +
-    jour + "/" +
-    mois + "/" +
-    annee +
-    " - " +
-    numero
   );
 }

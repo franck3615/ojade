@@ -14,6 +14,25 @@ function optimiserTournee() {
   const ui = opt_ui_();
   const sh = ss.getSheetByName(SHEET);
   if (!sh) { opt_alert_(ui, ss, "Erreur", "Feuille « " + SHEET + " » introuvable."); return; }
+
+  // ==========================================================
+  // NETTOYAGE AUTOMATIQUE, ICI, AVANT TOUT LE RESTE.
+  // Appelé directement dans optimiserTournee() (et pas
+  // seulement dans demarrer()) pour que ça tourne à coup sûr,
+  // que le bouton appelle demarrer() ou optimiserTournee()
+  // directement.
+  // ==========================================================
+  nettoyerResidusPlanningFinale_();
+  const lignesAdressesVidees = nettoyerAdressesInvalidesPlanningFinale_();
+  if (lignesAdressesVidees.length) {
+    opt_alert_(ui, ss, "Adresses invalides vidées",
+      "Ces lignes avaient une adresse sans aucun chiffre (donc pas une " +
+      "vraie adresse) — elles ont été vidées automatiquement :\n\n" +
+      lignesAdressesVidees.join("\n") +
+      "\n\nComplète-les avec une vraie adresse, sinon ces clients seront " +
+      "exclus du calcul d'itinéraire.");
+  }
+
 // === B2 et C2 : date et heure du 1er RDV (demandées si vides) ===
   if (sh.getRange(2, 2).getValue() === "" || sh.getRange(2, 2).getValue() === null) {
     const r = ui.prompt("Première date", "Date du 1er rendez-vous ? (JJ/MM/AAAA)", ui.ButtonSet.OK_CANCEL);

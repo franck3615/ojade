@@ -59,8 +59,140 @@ function fusionnerSimulationsSelectionRouge() {
     }
   }
 
-  assurerColonnes_(shC, 43);
+  assurerColonnes_(shC, 44);
   assurerColonnes_(shPlan, 23);
+
+
+  // ============================================================
+  // REPERAGE AUTOMATIQUE PAR DATE (colonne AR)
+  //
+  // Si au moins une ligne a déjà AP+AQ rouge (l'opérateur a
+  // commencé une sélection), on propose de scanner AR (date de
+  // la prochaine intervention) et de sélectionner aussi (AP+AQ+AR
+  // en rouge) tous les clients dont cette date est <= aujourd'hui
+  // + 15 jours.
+  //
+  // On ne touche pas au texte de AQ (déjà rempli en amont avec
+  // l'étiquette "SIMULATION ...") : seule la couleur change. Les
+  // lignes sans étiquette AQ valide sont ignorées et signalées,
+  // pour ne pas créer de sélection qui échouerait plus loin.
+  // ============================================================
+
+  function toDateOnlyLocal_(valeur) {
+
+    let d;
+
+    if (valeur instanceof Date) {
+      d = new Date(valeur.getTime());
+    } else if (valeur) {
+      d = new Date(valeur);
+    } else {
+      return null;
+    }
+
+    if (isNaN(d.getTime())) {
+      return null;
+    }
+
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function reperageAutomatiqueAR_() {
+
+    const lastRowC = shC.getLastRow();
+    if (lastRowC < 2) return;
+
+    const nbLignesC = lastRowC - 1;
+
+    // AP:AQ existantes
+    const couleursAPAQ =
+      shC.getRange(2, 42, nbLignesC, 2).getBackgrounds();
+
+    let dejaUneSelection = false;
+
+    for (let i = 0; i < couleursAPAQ.length; i++) {
+      if (
+        estRouge(couleursAPAQ[i][0]) &&
+        estRouge(couleursAPAQ[i][1])
+      ) {
+        dejaUneSelection = true;
+        break;
+      }
+    }
+
+    if (!dejaUneSelection) return;
+
+    const reponse = ui.alert(
+      "Repérage automatique",
+      "Au moins un client est déjà sélectionné (AP+AQ rouge).\n\n" +
+      "Veux-tu que je repère automatiquement, en colonne AR (date de la " +
+      "prochaine intervention), les clients dont cette date est dans les " +
+      "15 prochains jours, et que je les sélectionne aussi (AP, AQ, AR en rouge) ?",
+      ui.ButtonSet.YES_NO
+    );
+
+    if (reponse !== ui.Button.YES) return;
+
+    const aujourdHui = new Date();
+    aujourdHui.setHours(0, 0, 0, 0);
+
+    const pivot = new Date(aujourdHui);
+    pivot.setDate(pivot.getDate() + 15);
+
+    const blocAPAR =
+      shC.getRange(2, 42, nbLignesC, 3).getValues();        // AP:AR valeurs (pour AQ texte)
+
+    const backgroundsAPAR =
+      shC.getRange(2, 42, nbLignesC, 3).getBackgrounds();   // AP:AR couleurs
+
+    let nbColores = 0;
+    let nbIgnores = 0;
+
+    for (let i = 0; i < blocAPAR.length; i++) {
+
+      const dateAR = toDateOnlyLocal_(blocAPAR[i][2]); // AR = 3e colonne du bloc
+
+      if (!dateAR || dateAR.getTime() > pivot.getTime()) {
+        continue;
+      }
+
+      const aqTexte = String(blocAPAR[i][1] || "").trim(); // AQ = 2e colonne du bloc
+
+      if (
+        !aqTexte ||
+        aqTexte.toLowerCase().indexOf("simulation") !== 0
+      ) {
+        nbIgnores++;
+        continue;
+      }
+
+      backgroundsAPAR[i][0] = "#ff0000"; // AP
+      backgroundsAPAR[i][1] = "#ff0000"; // AQ
+      backgroundsAPAR[i][2] = "#ff0000"; // AR
+
+      nbColores++;
+    }
+
+    shC.getRange(2, 42, nbLignesC, 3).setBackgrounds(backgroundsAPAR);
+
+    SpreadsheetApp.flush();
+
+    ui.alert(
+      "Repérage terminé",
+      nbColores + " client(s) sélectionné(s) automatiquement " +
+      "(intervention prévue avant le " +
+      Utilities.formatDate(pivot, ss.getSpreadsheetTimeZone(), "dd/MM/yyyy") +
+      ").\n\n" +
+      (nbIgnores
+        ? nbIgnores + " ligne(s) ignorée(s) : date dans les 15 jours mais " +
+          "pas d'étiquette de simulation valide en AQ."
+        : "Aucune ligne ignorée."),
+      ui.ButtonSet.OK
+    );
+  }
+
+  reperageAutomatiqueAR_();
 
 
   // ============================================================

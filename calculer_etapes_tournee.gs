@@ -19,10 +19,9 @@
  * Trie ensuite la colonne K (ordre croissant) pour obtenir l'ordre de visite.
  */
 function calculerEtapesTourneeAllerRetour() {
-  // Coordonnées du dépôt (Nanterre, 92000) — à adapter si le point de départ
-  // réel est différent.
-  const DEPOT_LAT = 48.8924;
-  const DEPOT_LON = 2.2065;
+  // Coordonnées du dépôt (Issy-les-Moulineaux, 92130).
+  const DEPOT_LAT = 48.8242;
+  const DEPOT_LON = 2.2701;
 
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();

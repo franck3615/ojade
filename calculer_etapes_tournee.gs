@@ -16,12 +16,17 @@
  *     retournement), la moitié la plus proche forme le RETOUR (numérotée en
  *     sens inverse, du milieu jusqu'au plus proche du dépôt).
  *
- * Trie ensuite la colonne K (ordre croissant) pour obtenir l'ordre de visite.
+ * La dernière ligne de données est déterminée à partir de la colonne E
+ * (colonne pivot), et le tri final porte sur la plage A:U de cette hauteur.
  */
 function calculerEtapesTourneeAllerRetour() {
   // Coordonnées du dépôt (Issy-les-Moulineaux, 92130).
   const DEPOT_LAT = 48.8242;
   const DEPOT_LON = 2.2701;
+
+  // Colonnes du tableau A:U et position de la colonne K dans cette plage.
+  const NB_COLONNES_TABLEAU = 21; // A à U
+  const COLONNE_ETAPE_DANS_TABLEAU = 11; // K, position relative à la plage A:U
 
   const ss = SpreadsheetApp.getActive();
   const ui = SpreadsheetApp.getUi();
@@ -36,7 +41,7 @@ function calculerEtapesTourneeAllerRetour() {
     return;
   }
 
-  const lastPlan = shPlan.getLastRow();
+  const lastPlan = trouverDerniereLigneColonneE_(shPlan);
 
   if (lastPlan < 2) {
     ui.alert('PlanningFinale est vide.');
@@ -124,15 +129,48 @@ function calculerEtapesTourneeAllerRetour() {
   shPlan.getRange(2, 11, nbLignes, 1).setValues(sorties);
   SpreadsheetApp.flush();
 
+  // Tri automatique du tableau A:U (sur la hauteur trouvée via la colonne E)
+  // par la colonne K croissante.
+  shPlan
+    .getRange(2, 1, nbLignes, NB_COLONNES_TABLEAU)
+    .sort({ column: COLONNE_ETAPE_DANS_TABLEAU, ascending: true });
+
+  SpreadsheetApp.flush();
+
   ui.alert(
     '✅ Étapes calculées',
     'Étapes numérotées : ' + ordreFinal.length + '\n' +
     '  - Aller : ' + groupeAller.length + '\n' +
     '  - Retour : ' + groupeRetour.length + '\n' +
-    'Adresses non géolocalisées (colonne K laissée vide) : ' + nbAdresseInvalide + '\n\n' +
-    'Trie ensuite la colonne K (ordre croissant) pour obtenir l\'ordre de visite.',
+    'Adresses non géolocalisées : ' + nbAdresseInvalide + '\n\n' +
+    'Le tableau A:U a été trié automatiquement par la colonne K.',
     ui.ButtonSet.OK
   );
+}
+
+
+/**
+ * Renvoie le numéro de la dernière ligne non vide de la colonne E (pivot),
+ * en partant de la ligne 2 (la ligne 1 contient les en-têtes).
+ */
+function trouverDerniereLigneColonneE_(feuille) {
+  const derniereLigneFeuille = feuille.getLastRow();
+
+  if (derniereLigneFeuille < 2) {
+    return 1;
+  }
+
+  const valeursColonneE = feuille
+    .getRange(2, 5, derniereLigneFeuille - 1, 1)
+    .getValues();
+
+  for (let i = valeursColonneE.length - 1; i >= 0; i--) {
+    if (String(valeursColonneE[i][0]).trim() !== '') {
+      return i + 2;
+    }
+  }
+
+  return 1;
 }
 
 

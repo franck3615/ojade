@@ -40,6 +40,13 @@ function fusionnerSimulationsSelectionRouge() {
 
 
   // ============================================================
+  // MEMOIRE DES COULEURS AP/AQ (avant toute sélection/fusion)
+  // ============================================================
+
+  gererCouleurOrigineAPAQ();
+
+
+  // ============================================================
   // SECURITE : ETENDRE LES FEUILLES SI ELLES N'ONT PAS ASSEZ
   // DE COLONNES (sinon getRange plante avec "columns out of bounds")
   //
@@ -1104,4 +1111,155 @@ function fusionnerSimulationsSelectionRouge() {
 
     ui.ButtonSet.OK
   );
+}
+
+
+// ============================================================================
+// MEMOIRE / RESTAURATION DES COULEURS D'ORIGINE DE AP ET AQ
+//
+// Fonction autonome, à bascule :
+// - Si aucune sauvegarde n'existe (colonne AS vide partout) : elle
+//   sauvegarde les couleurs actuelles de AP et AQ dans AS (texte
+//   "couleurAP|couleurAQ" + couleur de AS = couleur de AP), SAUF les
+//   lignes déjà rouges (AP ou AQ), qui sont ignorées.
+// - Si une sauvegarde existe déjà : elle propose à l'opérateur de
+//   revenir aux couleurs d'origine (Oui/Non), et si Oui, restaure
+//   AP et AQ puis vide la mémoire (AS).
+//
+// Appelée automatiquement en tout début de
+// fusionnerSimulationsSelectionRouge().
+// ============================================================================
+
+function gererCouleurOrigineAPAQ() {
+  const ss = SpreadsheetApp.getActive();
+  const ui = SpreadsheetApp.getUi();
+  const shC = ss.getSheetByName("Clients_traitement");
+
+  if (!shC) {
+    ui.alert("Erreur", "Clients_traitement introuvable.", ui.ButtonSet.OK);
+    return;
+  }
+
+  const lastRow = shC.getLastRow();
+  if (lastRow < 2) return;
+
+  const nbLignes = lastRow - 1;
+
+  // AP = colonne 42, AQ = colonne 43, AS = colonne 45 (mémoire des couleurs)
+  const COL_AP = 42;
+  const COL_AQ = 43;
+  const COL_AS = 45;
+
+  function estRouge_(couleur) {
+    couleur = String(couleur || "").trim().toLowerCase();
+    const m = couleur.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/);
+    if (!m) return false;
+
+    const r = parseInt(m[1], 16);
+    const g = parseInt(m[2], 16);
+    const b = parseInt(m[3], 16);
+
+    return (
+      r >= 170 &&
+      g <= 100 &&
+      b <= 100 &&
+      r >= g + 80 &&
+      r >= b + 80
+    );
+  }
+
+  const valeursAS = shC.getRange(2, COL_AS, nbLignes, 1).getValues();
+
+  // Y a-t-il déjà une sauvegarde en mémoire (AS non vide quelque part) ?
+  let sauvegardeExistante = false;
+  for (let i = 0; i < valeursAS.length; i++) {
+    if (String(valeursAS[i][0] || "").trim() !== "") {
+      sauvegardeExistante = true;
+      break;
+    }
+  }
+
+  if (!sauvegardeExistante) {
+    // --- MODE SAUVEGARDE : couleurs actuelles de AP et AQ, SAUF le rouge ---
+    const couleursAPAQ = shC.getRange(2, COL_AP, nbLignes, 2).getBackgrounds();
+
+    const nouvellesAS = [];
+    const couleursASVisuel = [];
+    let nbSauvegardes = 0;
+    let nbExclues = 0;
+
+    for (let i = 0; i < couleursAPAQ.length; i++) {
+      const couleurAP = couleursAPAQ[i][0] || "#ffffff";
+      const couleurAQ = couleursAPAQ[i][1] || "#ffffff";
+
+      if (estRouge_(couleurAP) || estRouge_(couleurAQ)) {
+        // Ligne déjà rouge : on ne la sauvegarde pas.
+        nouvellesAS.push([""]);
+        couleursASVisuel.push([null]);
+        nbExclues++;
+        continue;
+      }
+
+      nouvellesAS.push([couleurAP + "|" + couleurAQ]);
+      couleursASVisuel.push([couleurAP]);
+      nbSauvegardes++;
+    }
+
+    shC.getRange(2, COL_AS, nbLignes, 1).setValues(nouvellesAS);
+    shC.getRange(2, COL_AS, nbLignes, 1).setBackgrounds(couleursASVisuel);
+
+    SpreadsheetApp.flush();
+
+    ui.alert(
+      "Couleurs sauvegardées",
+      nbSauvegardes + " ligne(s) sauvegardée(s) en mémoire (colonne AS).\n" +
+      nbExclues + " ligne(s) déjà rouges ont été ignorées (non sauvegardées).\n\n" +
+      "Tu peux maintenant colorier tes sélections en rouge.",
+      ui.ButtonSet.OK
+    );
+
+  } else {
+    // --- MODE RESTAURATION : on propose de revenir aux couleurs d'origine ---
+    const reponse = ui.alert(
+      "Restauration des couleurs",
+      "Une sauvegarde des couleurs d'origine de AP et AQ existe.\n\n" +
+      "Veux-tu revenir à ces couleurs d'origine maintenant ?",
+      ui.ButtonSet.YES_NO
+    );
+
+    if (reponse !== ui.Button.YES) return;
+
+    const couleursAP = [];
+    const couleursAQ = [];
+
+    for (let i = 0; i < valeursAS.length; i++) {
+      const memo = String(valeursAS[i][0] || "").trim();
+
+      if (!memo) {
+        couleursAP.push([null]);
+        couleursAQ.push([null]);
+        continue;
+      }
+
+      const parties = memo.split("|");
+      couleursAP.push([parties[0] || "#ffffff"]);
+      couleursAQ.push([parties[1] || "#ffffff"]);
+    }
+
+    shC.getRange(2, COL_AP, nbLignes, 1).setBackgrounds(couleursAP);
+    shC.getRange(2, COL_AQ, nbLignes, 1).setBackgrounds(couleursAQ);
+
+    // Vider la mémoire (texte + couleur) une fois restauré
+    shC.getRange(2, COL_AS, nbLignes, 1).clearContent();
+    shC.getRange(2, COL_AS, nbLignes, 1).setBackground(null);
+
+    SpreadsheetApp.flush();
+
+    ui.alert(
+      "Couleurs restaurées",
+      "Les couleurs d'origine de AP et AQ ont été rétablies.\n\n" +
+      "La mémoire (colonne AS) a été vidée.",
+      ui.ButtonSet.OK
+    );
+  }
 }

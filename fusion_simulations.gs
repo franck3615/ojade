@@ -1115,18 +1115,21 @@ function fusionnerSimulationsSelectionRouge() {
 
 
 // ============================================================================
-// MEMOIRE / RESTAURATION DES COULEURS D'ORIGINE DE AP ET AQ
+// MEMOIRE / RESTAURATION DES COULEURS D'ORIGINE DE AP, AQ ET AR
 //
-// Fonction autonome, à bascule :
-// - Si aucune sauvegarde n'existe (colonne AS vide partout) : elle
-//   sauvegarde les couleurs actuelles de AP, AQ et AR dans AS (texte
-//   "couleurAP|couleurAQ|couleurAR" + couleur de AS = couleur de AP),
-//   SAUF les lignes déjà rouges (AP, AQ ou AR), qui sont ignorées.
+// Fonction autonome, à bascule. La mémoire est stockée en interne
+// (PropertiesService, invisible), PAS en texte dans une cellule : AS ne
+// sert que de repère VISUEL (sa couleur = la couleur d'origine de AQ).
+//
+// - Si aucune sauvegarde n'existe : elle sauvegarde les couleurs
+//   actuelles de AP, AQ et AR (par code client), SAUF les lignes déjà
+//   rouges (AP, AQ ou AR), qui sont ignorées.
 // - Si une sauvegarde existe déjà : l'opérateur doit sélectionner une
-//   cellule dans la colonne AS. Seules les lignes dont AS a EXACTEMENT
-//   la même valeur que la cellule sélectionnée sont proposées à la
-//   restauration (Oui/Non), et si Oui, seules ces lignes voient AP, AQ
-//   et AR restaurées, puis leur mémoire (AS) est vidée.
+//   cellule COLORÉE dans la colonne AS. Toutes les lignes dont AS a
+//   EXACTEMENT la même couleur sont proposées à la restauration
+//   (Oui/Non), et si Oui, seules ces lignes voient AP, AQ et AR
+//   restaurées à partir de leur propre sauvegarde, puis leur mémoire
+//   est effacée.
 //
 // Appelée automatiquement en tout début de
 // fusionnerSimulationsSelectionRouge().
@@ -1147,7 +1150,9 @@ function gererCouleurOrigineAPAQ() {
 
   const nbLignes = lastRow - 1;
 
-  // AP = colonne 42, AQ = colonne 43, AR = colonne 44, AS = colonne 45 (mémoire)
+  // A = code client, AP = colonne 42, AQ = colonne 43, AR = colonne 44,
+  // AS = colonne 45 (repère visuel uniquement, aucun texte)
+  const COL_CODE = 1;
   const COL_AP = 42;
   const COL_AQ = 43;
   const COL_AR = 44;
@@ -1171,94 +1176,93 @@ function gererCouleurOrigineAPAQ() {
     );
   }
 
-  const valeursAS = shC.getRange(2, COL_AS, nbLignes, 1).getValues();
-
-  // Y a-t-il déjà une sauvegarde en mémoire (AS non vide quelque part) ?
-  let sauvegardeExistante = false;
-  for (let i = 0; i < valeursAS.length; i++) {
-    if (String(valeursAS[i][0] || "").trim() !== "") {
-      sauvegardeExistante = true;
-      break;
-    }
-  }
+  const props = PropertiesService.getDocumentProperties();
+  const brut = props.getProperty("BACKUP_APAQAR");
+  const backup = brut ? JSON.parse(brut) : {};
+  const sauvegardeExistante = Object.keys(backup).length > 0;
 
   if (!sauvegardeExistante) {
     // --- MODE SAUVEGARDE : couleurs actuelles de AP, AQ et AR, SAUF le rouge ---
+    const codes = shC.getRange(2, COL_CODE, nbLignes, 1).getValues();
     const couleursAPAQAR = shC.getRange(2, COL_AP, nbLignes, 3).getBackgrounds();
 
-    const nouvellesAS = [];
+    const nouveauBackup = {};
     const couleursASVisuel = [];
     let nbSauvegardes = 0;
     let nbExclues = 0;
 
     for (let i = 0; i < couleursAPAQAR.length; i++) {
+      const code = String(codes[i][0] || "").trim();
       const couleurAP = couleursAPAQAR[i][0] || "#ffffff";
       const couleurAQ = couleursAPAQAR[i][1] || "#ffffff";
       const couleurAR = couleursAPAQAR[i][2] || "#ffffff";
 
-      if (estRouge_(couleurAP) || estRouge_(couleurAQ) || estRouge_(couleurAR)) {
-        // Ligne déjà rouge (AP, AQ ou AR) : on ne la sauvegarde pas.
-        nouvellesAS.push([""]);
+      if (!code || estRouge_(couleurAP) || estRouge_(couleurAQ) || estRouge_(couleurAR)) {
+        // Pas de code, ou ligne déjà rouge : on ne la sauvegarde pas.
         couleursASVisuel.push([null]);
-        nbExclues++;
+        if (code) nbExclues++;
         continue;
       }
 
-      nouvellesAS.push([couleurAP + "|" + couleurAQ + "|" + couleurAR]);
-      couleursASVisuel.push([couleurAP]);
+      nouveauBackup[code] = { ap: couleurAP, aq: couleurAQ, ar: couleurAR };
+      couleursASVisuel.push([couleurAQ]); // repère visuel = couleur de AQ (celle qui varie)
       nbSauvegardes++;
     }
 
-    shC.getRange(2, COL_AS, nbLignes, 1).setValues(nouvellesAS);
+    props.setProperty("BACKUP_APAQAR", JSON.stringify(nouveauBackup));
     shC.getRange(2, COL_AS, nbLignes, 1).setBackgrounds(couleursASVisuel);
 
     SpreadsheetApp.flush();
 
     ui.alert(
       "Couleurs sauvegardées",
-      nbSauvegardes + " ligne(s) sauvegardée(s) en mémoire (colonne AS).\n" +
+      nbSauvegardes + " ligne(s) sauvegardée(s) en mémoire (interne, rien écrit en AS à part la couleur).\n" +
       nbExclues + " ligne(s) déjà rouges (AP, AQ ou AR) ont été ignorées.\n\n" +
       "Tu peux maintenant colorier tes sélections en rouge.",
       ui.ButtonSet.OK
     );
 
   } else {
-    // --- MODE RESTAURATION : ciblée sur la cellule AS sélectionnée par l'opérateur ---
+    // --- MODE RESTAURATION : ciblée sur la couleur de la cellule AS sélectionnée ---
     const celluleActive = shC.getActiveCell();
 
     if (celluleActive.getColumn() !== COL_AS || celluleActive.getRow() < 2) {
       ui.alert(
         "Sélection requise",
-        "Pour restaurer, sélectionne d'abord une cellule dans la colonne AS " +
+        "Pour restaurer, sélectionne d'abord une cellule colorée dans la colonne AS " +
         "(sur une ligne qui a une sauvegarde), puis relance.",
         ui.ButtonSet.OK
       );
       return;
     }
 
-    const valeurReference = String(celluleActive.getValue() || "").trim();
+    const couleurReference = String(celluleActive.getBackground() || "#ffffff").toLowerCase();
 
-    if (!valeurReference) {
+    if (couleurReference === "#ffffff") {
       ui.alert(
         "Aucune sauvegarde ici",
         "La cellule AS sélectionnée (ligne " + celluleActive.getRow() +
-        ") est vide : il n'y a rien à restaurer pour cette ligne.",
+        ") n'a pas de couleur de sauvegarde : il n'y a rien à restaurer pour cette ligne.",
         ui.ButtonSet.OK
       );
       return;
     }
 
-    // Repérer toutes les lignes dont AS a EXACTEMENT la même valeur que la sélection
+    const codes = shC.getRange(2, COL_CODE, nbLignes, 1).getValues();
+    const couleursASActuelles = shC.getRange(2, COL_AS, nbLignes, 1).getBackgrounds();
+
+    // Repérer toutes les lignes dont AS a EXACTEMENT la même couleur que la sélection
     const lignesACibler = [];
-    for (let i = 0; i < valeursAS.length; i++) {
-      if (String(valeursAS[i][0] || "").trim() === valeurReference) {
+    for (let i = 0; i < couleursASActuelles.length; i++) {
+      const bg = String(couleursASActuelles[i][0] || "#ffffff").toLowerCase();
+      if (bg === couleurReference) {
         lignesACibler.push(i);
       }
     }
 
     const reponse = ui.alert(
       "Restauration des couleurs",
-      lignesACibler.length + " ligne(s) partagent la même sauvegarde que la ligne sélectionnée.\n\n" +
+      lignesACibler.length + " ligne(s) partagent la même couleur de sauvegarde que la ligne sélectionnée.\n\n" +
       "Veux-tu revenir aux couleurs d'origine de AP, AQ et AR pour ces " +
       lignesACibler.length + " ligne(s) ?",
       ui.ButtonSet.YES_NO
@@ -1266,35 +1270,42 @@ function gererCouleurOrigineAPAQ() {
 
     if (reponse !== ui.Button.YES) return;
 
-    const parties = valeurReference.split("|");
-    const couleurAP = parties[0] || "#ffffff";
-    const couleurAQ = parties[1] || "#ffffff";
-    const couleurAR = parties[2] || "#ffffff";
-
     const couleursAPAQAR = shC.getRange(2, COL_AP, nbLignes, 3).getBackgrounds();
-    const nouvellesASApres = valeursAS.map(function(v) {
-      return [String(v[0] || "")];
+    const couleursASApres = couleursASActuelles.map(function(v) {
+      return [v[0]];
     });
-    const couleursASApres = shC.getRange(2, COL_AS, nbLignes, 1).getBackgrounds();
+
+    let nbRestaurees = 0;
 
     lignesACibler.forEach(function(i) {
-      couleursAPAQAR[i][0] = couleurAP;
-      couleursAPAQAR[i][1] = couleurAQ;
-      couleursAPAQAR[i][2] = couleurAR;
-      nouvellesASApres[i][0] = "";
+      const code = String(codes[i][0] || "").trim();
+      const entree = backup[code];
+      if (!entree) return;
+
+      couleursAPAQAR[i][0] = entree.ap;
+      couleursAPAQAR[i][1] = entree.aq;
+      couleursAPAQAR[i][2] = entree.ar;
       couleursASApres[i][0] = null;
+
+      delete backup[code];
+      nbRestaurees++;
     });
 
     shC.getRange(2, COL_AP, nbLignes, 3).setBackgrounds(couleursAPAQAR);
-    shC.getRange(2, COL_AS, nbLignes, 1).setValues(nouvellesASApres);
     shC.getRange(2, COL_AS, nbLignes, 1).setBackgrounds(couleursASApres);
+
+    if (Object.keys(backup).length > 0) {
+      props.setProperty("BACKUP_APAQAR", JSON.stringify(backup));
+    } else {
+      props.deleteProperty("BACKUP_APAQAR");
+    }
 
     SpreadsheetApp.flush();
 
     ui.alert(
       "Couleurs restaurées",
-      lignesACibler.length + " ligne(s) restaurée(s) (AP, AQ, AR).\n" +
-      "Leur mémoire (colonne AS) a été vidée.",
+      nbRestaurees + " ligne(s) restaurée(s) (AP, AQ, AR).\n" +
+      "Leur mémoire a été effacée.",
       ui.ButtonSet.OK
     );
   }

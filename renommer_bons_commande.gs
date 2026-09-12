@@ -120,9 +120,15 @@ function ouvrirDossierPdf_(idDossier, nomDossier) {
 }
 
 
-/** Renvoie tous les fichiers PDF du dossier dont le nom contient le numéro donné. */
+/**
+ * Renvoie tous les fichiers du dossier dont le nom contient le numéro donné.
+ * On ne filtre volontairement pas par MimeType.PDF : selon les réglages de
+ * synchronisation Drive, un PDF déposé peut être stocké avec un autre type
+ * MIME tout en s'affichant comme un PDF localement. Le nom de fichier reste
+ * le critère fiable.
+ */
 function chercherFichiersParNumero_(dossier, numero) {
-  const fichiers = dossier.getFilesByType(MimeType.PDF);
+  const fichiers = dossier.getFiles();
   const correspondances = [];
 
   while (fichiers.hasNext()) {

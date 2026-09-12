@@ -17,7 +17,9 @@
 function renommerBonsDeCommandeAvecMontantRemise() {
   const NOM_ONGLET = 'SituationRemiseFacture';
   const PREMIERE_LIGNE = 2; // La ligne 1 contient les en-têtes.
-  const ID_DOSSIER_PDF = ''; // Optionnel : renseigner l'ID du dossier Drive si le nom seul est ambigu.
+  // Le nom seul est ambigu (le dossier remonte deux fois via DriveApp, probablement
+  // parce qu'il est partagé/dans un Drive partagé) : on fixe l'ID directement.
+  const ID_DOSSIER_PDF = '1z4kwTrlCaenJ-4FLy4kBWiX5fvl37QEd';
   const NOM_DOSSIER_PDF = 'ImportClaudeFourni';
 
   const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOM_ONGLET);

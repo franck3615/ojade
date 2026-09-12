@@ -17,9 +17,10 @@
 function renommerBonsDeCommandeAvecMontantRemise() {
   const NOM_ONGLET = 'SituationRemiseFacture';
   const PREMIERE_LIGNE = 2; // La ligne 1 contient les en-têtes.
-  // Le nom seul est ambigu (le dossier remonte deux fois via DriveApp, probablement
-  // parce qu'il est partagé/dans un Drive partagé) : on fixe l'ID directement.
-  const ID_DOSSIER_PDF = '1z4kwTrlCaenJ-4FLy4kBWiX5fvl37QEd';
+  // Le nom seul est ambigu : deux dossiers distincts s'appellent « ImportClaudeFourni »
+  // (un autre appartient à un compte différent, dans un Drive partagé). On fixe donc
+  // l'ID exact du dossier de eau@ojade.fr.
+  const ID_DOSSIER_PDF = '1irv-FfihBzGx5x4ddGzKM3ZHajqSYu-X';
   const NOM_DOSSIER_PDF = 'ImportClaudeFourni';
 
   const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOM_ONGLET);

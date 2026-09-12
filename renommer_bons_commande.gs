@@ -139,7 +139,7 @@ function chercherFichiersParNumero_(dossier, numero) {
 /** Construit le nom de fichier cible : "<NOM> - <NUMERO> - R <MONTANT>.pdf". */
 function construireNomFichier_(nomClient, numero, montant) {
   const montantFormate = formaterMontant_(montant);
-  return nettoyerPourNomFichier_(nomClient) + ' - ' + nettoyerPourNomFichier_(numero) +
+  return nettoyerPourNomFichier_(nomClient).toUpperCase() + ' - ' + nettoyerPourNomFichier_(numero) +
     ' - R ' + montantFormate + '.pdf';
 }
 

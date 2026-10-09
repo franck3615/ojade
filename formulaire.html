@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parlons de votre projet</title>
+  <meta name="description" content="Contactez-nous pour une demande d’information ou de devis.">
+
+  <style>
+    :root {
+      --primary: #3158d5;
+      --background: #f3f5fa;
+      --text: #202939;
+      --border: #cbd2df;
+      --error: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      background: var(--background);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 700px;
+      margin: auto;
+      padding: clamp(20px, 5vw, 40px);
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 12px 40px #20293912;
+    }
+
+    h1 { margin-top: 0; }
+    .intro, .help { color: #566176; }
+    .help { margin: 6px 0 0; font-size: .88rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    label, legend {
+      font-weight: 600;
+    }
+
+    .field > label {
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    input:not([type="checkbox"]),
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: white;
+      color: inherit;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    button:focus-visible {
+      outline: 3px solid #3158d540;
+      outline-offset: 2px;
+    }
+
+    fieldset {
+      margin: 0 0 20px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    fieldset .field:last-child { margin-bottom: 0; }
+
+    .checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .checkbox input {
+      margin-top: 6px;
+      accent-color: var(--primary);
+    }
+
+    .checkbox label { font-weight: normal; }
+
+    /* Champ piège anti-spam : invisible pour les humains. */
+    .piege {
+      position: absolute;
+      left: -10000px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 9px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    button.secondary {
+      background: #e9edf5;
+      color: var(--text);
+    }
+
+    #erreur {
+      margin: 20px 0 0;
+      padding: 14px 16px;
+      background: #fef3f2;
+      border: 1px solid #f4b4ad;
+      border-radius: 10px;
+      color: var(--error);
+    }
+
+    #resultat {
+      padding: 20px;
+      background: #eef8f2;
+      border: 1px solid #a9d5ba;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    #resultat h2 { margin-top: 0; font-size: 1.2rem; }
+    dt { margin-top: 12px; font-weight: 600; }
+    dd { margin: 3px 0 0; white-space: pre-wrap; }
+
+    @media (max-width: 540px) {
+      .grid { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Parlons de votre projet</h1>
+    <p class="intro" id="intro">
+      Les champs marqués d’un astérisque (*) sont obligatoires.
+    </p>
+
+    <!--
+      CONFIGURATION : remplacez VOTRE_ID_FORMSPREE ci-dessous par
+      l’identifiant de votre formulaire Formspree (ex. : xyzabcd).
+      Voir le fichier README.md pour la marche à suivre.
+    -->
+    <form
+      id="formulaire"
+      action="https://formspree.io/f/VOTRE_ID_FORMSPREE"
+      method="POST"
+    >
+      <input type="hidden" name="_subject" id="sujet"
+             value="Nouvelle demande depuis le site">
+
+      <div class="grid">
+        <div class="field">
+          <label for="nom">Nom complet *</label>
+          <input
+            id="nom" name="nom" type="text"
+            autocomplete="name" maxlength="100" required
+          >
+        </div>
+
+        <div class="field">
+          <label for="email">Adresse e-mail *</label>
+          <input
+            id="email" name="email" type="email"
+            autocomplete="email" maxlength="150" required
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="profil">Vous êtes… *</label>
+        <select id="profil" name="profil" required>
+          <option value="">Sélectionnez votre profil</option>
+          <option value="Particulier">Un particulier</option>
+          <option value="Professionnel">Un professionnel</option>
+        </select>
+      </div>
+
+      <fieldset id="blocEntreprise" hidden disabled>
+        <legend>Votre entreprise</legend>
+
+        <div class="field">
+          <label for="entreprise">Nom de l’entreprise *</label>
+          <input
+            id="entreprise" name="entreprise" type="text"
+            autocomplete="organization" maxlength="150"
+          >
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="demande">Type de demande *</label>
+        <select id="demande" name="demande" required>
+          <option value="">Choisissez une demande</option>
+          <option value="Demande d’information">Demande d’information</option>
+          <option value="Demande de devis">Demande de devis</option>
+          <option value="Autre demande">Autre demande</option>
+        </select>
+      </div>
+
+      <fieldset id="blocDevis" hidden disabled>
+        <legend>Précisions pour le devis</legend>
+
+        <div class="field">
+          <label for="budget">Budget estimé *</label>
+          <select id="budget" name="budget">
+            <option value="">Sélectionnez une tranche</option>
+            <option value="Moins de 500 €">Moins de 500 €</option>
+            <option value="500 à 2 000 €">500 à 2 000 €</option>
+            <option value="Plus de 2 000 €">Plus de 2 000 €</option>
+            <option value="À définir">À définir</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="date">Date souhaitée</label>
+          <input id="date" name="date_souhaitee" type="date">
+        </div>
+      </fieldset>
+
+      <div class="field" id="blocAutre" hidden>
+        <label for="precision">Précisez votre demande *</label>
+        <input
+          id="precision" name="precision" type="text"
+          maxlength="150" disabled
+        >
+      </div>
+
+      <div class="field">
+        <label for="message">Votre message *</label>
+        <textarea
+          id="message" name="message"
+          maxlength="1000" required
+          aria-describedby="compteur"
+        ></textarea>
+        <p id="compteur" class="help">0 / 1 000 caractères</p>
+      </div>
+
+      <div class="piege" aria-hidden="true">
+        <label for="_gotcha">Ne pas remplir ce champ</label>
+        <input id="_gotcha" name="_gotcha" type="text"
+               tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="checkbox">
+        <input id="consentement" name="consentement" type="checkbox"
+               value="Oui" required>
+        <label for="consentement">
+          J’accepte que les informations saisies soient utilisées
+          pour répondre à ma demande. *
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="envoyer">Envoyer ma demande</button>
+        <button type="reset" class="secondary">Réinitialiser</button>
+      </div>
+
+      <p class="help">
+        Vos données servent uniquement à traiter votre demande et ne sont
+        jamais cédées à des tiers.
+      </p>
+
+      <p id="erreur" role="alert" hidden></p>
+    </form>
+
+    <section
+      id="resultat"
+      aria-live="polite"
+      aria-atomic="true"
+      tabindex="-1"
+      hidden
+    ></section>
+  </main>
+
+  <script>
+    const form = document.querySelector("#formulaire");
+    const profil = document.querySelector("#profil");
+    const demande = document.querySelector("#demande");
+    const message = document.querySelector("#message");
+    const sujet = document.querySelector("#sujet");
+    const boutonEnvoyer = document.querySelector("#envoyer");
+    const erreur = document.querySelector("#erreur");
+    const intro = document.querySelector("#intro");
+    const resultat = document.querySelector("#resultat");
+
+    // Empêcher de choisir une date passée.
+    document.querySelector("#date").min =
+      new Date().toLocaleDateString("sv-SE"); // format AAAA-MM-JJ
+
+    function afficherBloc(id, visible, champsObligatoires = []) {
+      const bloc = document.getElementById(id);
+      bloc.hidden = !visible;
+
+      if (bloc.tagName === "FIELDSET") {
+        bloc.disabled = !visible;
+      }
+
+      bloc.querySelectorAll("input, select, textarea").forEach(champ => {
+        champ.disabled = !visible;
+        champ.required =
+          visible && champsObligatoires.includes(champ.id);
+      });
+    }
+
+    function actualiserChamps() {
+      afficherBloc(
+        "blocEntreprise",
+        profil.value === "Professionnel",
+        ["entreprise"]
+      );
+
+      afficherBloc(
+        "blocDevis",
+        demande.value === "Demande de devis",
+        ["budget"]
+      );
+
+      afficherBloc(
+        "blocAutre",
+        demande.value === "Autre demande",
+        ["precision"]
+      );
+    }
+
+    function actualiserCompteur() {
+      document.querySelector("#compteur").textContent =
+        `${message.value.length} / 1 000 caractères`;
+    }
+
+    function afficherErreur(texte) {
+      erreur.textContent = texte;
+      erreur.hidden = !texte;
+    }
+
+    profil.addEventListener("change", actualiserChamps);
+    demande.addEventListener("change", actualiserChamps);
+    message.addEventListener("input", actualiserCompteur);
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      afficherErreur("");
+
+      // Refuser un nom ou un message composé uniquement d’espaces.
+      form.querySelectorAll('input[type="text"], textarea').forEach(champ => {
+        champ.setCustomValidity(
+          !champ.disabled && champ.required && !champ.value.trim()
+            ? "Veuillez saisir un texte, pas uniquement des espaces."
+            : ""
+        );
+      });
+
+      if (!form.reportValidity()) return;
+
+      if (form.action.includes("VOTRE_ID_FORMSPREE")) {
+        afficherErreur(
+          "Le formulaire n’est pas encore configuré : remplacez " +
+          "VOTRE_ID_FORMSPREE par votre identifiant Formspree."
+        );
+        return;
+      }
+
+      const data = new FormData(form);
+      sujet.value = `Nouvelle demande depuis le site : ${demande.value}`;
+      data.set("_subject", sujet.value);
+
+      boutonEnvoyer.disabled = true;
+      boutonEnvoyer.textContent = "Envoi en cours…";
+
+      try {
+        const reponse = await fetch(form.action, {
+          method: "POST",
+          body: data,
+          headers: { Accept: "application/json" }
+        });
+
+        if (!reponse.ok) {
+          const details = await reponse.json().catch(() => ({}));
+          const messages = (details.errors || [])
+            .map(e => e.message)
+            .join(" ");
+          throw new Error(messages || `Erreur ${reponse.status}`);
+        }
+
+        afficherConfirmation(data);
+      } catch (e) {
+        console.error(e);
+        afficherErreur(
+          "Votre demande n’a pas pu être envoyée. Vérifiez votre " +
+          "connexion puis réessayez dans quelques instants."
+        );
+      } finally {
+        boutonEnvoyer.disabled = false;
+        boutonEnvoyer.textContent = "Envoyer ma demande";
+      }
+    });
+
+    function afficherConfirmation(data) {
+      const lignes = [
+        ["Nom", data.get("nom")],
+        ["E-mail", data.get("email")],
+        ["Profil", data.get("profil")]
+      ];
+
+      if (data.has("entreprise")) {
+        lignes.push(["Entreprise", data.get("entreprise")]);
+      }
+
+      lignes.push(["Demande", data.get("demande")]);
+
+      if (data.has("budget")) {
+        lignes.push(["Budget", data.get("budget")]);
+      }
+
+      if (data.get("date_souhaitee")) {
+        const [annee, mois, jour] = data.get("date_souhaitee").split("-");
+        lignes.push(["Date souhaitée", `${jour}/${mois}/${annee}`]);
+      }
+
+      if (data.has("precision")) {
+        lignes.push(["Précision", data.get("precision")]);
+      }
+
+      lignes.push(["Message", data.get("message")]);
+
+      const titre = document.createElement("h2");
+      titre.textContent = "Merci, votre demande a bien été envoyée !";
+
+      const note = document.createElement("p");
+      note.textContent =
+        "Nous vous répondrons dans les meilleurs délais. " +
+        "Voici le récapitulatif de votre demande :";
+
+      const liste = document.createElement("dl");
+
+      lignes.forEach(([libelle, valeur]) => {
+        const terme = document.createElement("dt");
+        const description = document.createElement("dd");
+
+        terme.textContent = libelle;
+        description.textContent = String(valeur ?? "").trim();
+
+        liste.append(terme, description);
+      });
+
+      resultat.replaceChildren(titre, note, liste);
+      form.hidden = true;
+      intro.hidden = true;
+      resultat.hidden = false;
+      resultat.focus();
+      resultat.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Effacer une erreur personnalisée dès la modification du champ.
+    form.addEventListener("input", event => {
+      if (typeof event.target.setCustomValidity === "function") {
+        event.target.setCustomValidity("");
+      }
+    });
+
+    form.addEventListener("reset", () => {
+      // Attendre que le navigateur ait réinitialisé les valeurs.
+      setTimeout(() => {
+        form.querySelectorAll("input, select, textarea").forEach(champ => {
+          champ.setCustomValidity("");
+        });
+
+        actualiserChamps();
+        actualiserCompteur();
+        afficherErreur("");
+      }, 0);
+    });
+
+    actualiserChamps();
+    actualiserCompteur();
+  </script>
+</body>
+</html>

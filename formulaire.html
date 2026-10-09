@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Inscription à la conférence</title>
-  <meta name="description" content="Inscrivez-vous à la conférence et choisissez vos ateliers.">
+  <title>Inscription — Les Facettes subtiles de l’eau</title>
+  <meta name="description" content="Inscription à la conférence et aux ateliers « Les Facettes subtiles de l’eau » avec Franck RAJJOU, les 20 et 21 novembre 2026 à Saint-Laurent-de-Neste.">
 
   <style>
     :root {
-      --primary: #3158d5;
-      --background: #f3f5fa;
-      --text: #202939;
-      --muted: #566176;
-      --border: #cbd2df;
+      --primary: #1f6f9f;
+      --primary-light: #eef6fb;
+      --background: #f1f5f8;
+      --text: #1d2a35;
+      --muted: #55636f;
+      --border: #c9d4dd;
       --error: #b42318;
     }
 
@@ -29,40 +30,57 @@
     }
 
     main {
-      max-width: 700px;
+      max-width: 720px;
       margin: auto;
       padding: clamp(20px, 5vw, 40px);
       background: white;
       border-radius: 18px;
-      box-shadow: 0 12px 40px #20293912;
+      box-shadow: 0 12px 40px #1d2a3512;
     }
 
-    h1 { margin: 0 0 8px; }
-    .infos {
-      margin: 0 0 20px;
-      color: var(--muted);
+    header { margin-bottom: 24px; }
+    .surtitre {
+      margin: 0;
+      color: var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      font-size: .85rem;
     }
-    .infos strong { color: var(--text); }
-    .intro, .help { color: var(--muted); }
-    .help { margin: 6px 0 0; font-size: .88rem; }
+    h1 { margin: 4px 0 8px; line-height: 1.2; }
+    .sous-titre { margin: 0 0 12px; font-size: 1.1rem; font-weight: 600; }
+    .lieu { margin: 0; color: var(--muted); }
+
+    .date-limite {
+      margin: 16px 0 0;
+      padding: 12px 16px;
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      border-radius: 6px;
+    }
+
+    h2 {
+      margin: 32px 0 6px;
+      font-size: 1.2rem;
+    }
+    .consigne { margin: 0 0 16px; color: var(--muted); font-style: italic; }
+    .help { margin: 6px 0 0; color: var(--muted); font-size: .88rem; }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 20px;
+      gap: 0 20px;
     }
 
-    .field { margin-bottom: 20px; }
-
-    label, legend { font-weight: 600; }
+    .field { margin-bottom: 18px; }
 
     .field > label {
       display: block;
       margin-bottom: 7px;
+      font-weight: 600;
     }
 
-    input:not([type="checkbox"], [type="radio"]),
-    textarea {
+    input:not([type="checkbox"], [type="radio"]) {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border);
@@ -72,67 +90,99 @@
       font: inherit;
     }
 
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
     input:focus-visible,
-    textarea:focus-visible,
-    button:focus-visible {
-      outline: 3px solid #3158d540;
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid #1f6f9f50;
       outline-offset: 2px;
     }
 
-    fieldset {
-      margin: 0 0 20px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
-
-    /* Ateliers */
-    .session .atelier:first-of-type { margin-top: 4px; }
-
-    .atelier {
+    /* Séances et modes de règlement */
+    .choix {
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      margin-top: 12px;
-      padding: 14px;
+      margin-bottom: 12px;
+      padding: 14px 16px;
       border: 1px solid var(--border);
       border-radius: 10px;
       cursor: pointer;
     }
 
-    .atelier:has(input:checked) {
+    .choix:has(input:checked) {
       border-color: var(--primary);
-      background: #f1f4fd;
+      background: var(--primary-light);
     }
 
-    .atelier input {
+    .choix input {
       flex: none;
-      margin-top: 5px;
+      width: 18px;
+      height: 18px;
+      margin-top: 3px;
       accent-color: var(--primary);
     }
 
-    .atelier span { display: block; }
-    .atelier .titre { font-weight: 600; }
-    .atelier .horaire { color: var(--muted); font-size: .9rem; }
+    .choix .contenu { flex: 1; }
+    .choix .titre { display: block; font-weight: 600; }
+    .choix .quand { display: block; }
+    .choix .detail { display: block; color: var(--muted); font-size: .92rem; }
+
+    .choix .prix {
+      flex: none;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .prix del { color: var(--muted); font-weight: 400; margin-right: 4px; }
+
+    .reduction {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    /* Montant */
+    .total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 16px 18px;
+      background: var(--text);
+      color: white;
+      border-radius: 10px;
+    }
+    .total strong { font-size: 1.6rem; }
+
+    details { margin-top: 14px; }
+    summary { cursor: pointer; color: var(--primary); font-weight: 600; }
+
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+      font-size: .95rem;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    th:last-child, td:last-child { text-align: right; white-space: nowrap; }
+    tr.actif td { background: var(--primary-light); font-weight: 600; }
 
     .checkbox {
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      margin: 20px 0;
+      margin: 24px 0;
     }
-
     .checkbox input {
-      margin-top: 6px;
+      flex: none;
+      margin-top: 5px;
       accent-color: var(--primary);
     }
-
-    .checkbox label { font-weight: normal; }
 
     /* Champ piège anti-spam : invisible pour les humains. */
     .piege {
@@ -143,14 +193,9 @@
       overflow: hidden;
     }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    button {
-      padding: 12px 20px;
+    button, .bouton {
+      display: inline-block;
+      padding: 14px 22px;
       border: none;
       border-radius: 9px;
       background: var(--primary);
@@ -158,19 +203,11 @@
       cursor: pointer;
       font: inherit;
       font-weight: 600;
+      text-decoration: none;
     }
+    button:disabled { opacity: .6; cursor: wait; }
 
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    button.secondary {
-      background: #e9edf5;
-      color: var(--text);
-    }
-
-    #erreur {
+    #erreur, .ferme {
       margin: 20px 0 0;
       padding: 14px 16px;
       background: #fef3f2;
@@ -179,37 +216,57 @@
       color: var(--error);
     }
 
-    #resultat {
+    .contact { margin-top: 20px; color: var(--muted); }
+    .contact a { color: inherit; font-weight: 600; }
+
+    #resultat h2 { margin-top: 0; }
+    .merci {
       padding: 20px;
       background: #eef8f2;
       border: 1px solid #a9d5ba;
       border-radius: 10px;
-      overflow-wrap: anywhere;
     }
+    .merci p { margin: 0 0 8px; }
+    .merci p:last-child { margin: 0; }
 
-    #resultat h2 { margin-top: 0; font-size: 1.2rem; }
-    dt { margin-top: 12px; font-weight: 600; }
-    dd { margin: 3px 0 0; white-space: pre-wrap; }
+    .paiement {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .paiement h3 { margin: 0 0 10px; }
+    .paiement p { margin: 0; }
+    .paiement dl { margin: 0; }
+    .paiement dt { margin-top: 10px; font-weight: 600; }
+    .paiement dd { margin: 2px 0 0; overflow-wrap: anywhere; }
 
     @media (max-width: 540px) {
-      .grid { grid-template-columns: 1fr; gap: 0; }
+      .grid { grid-template-columns: 1fr; }
+      .choix { flex-wrap: wrap; }
+      .choix .prix { margin-left: 30px; }
     }
   </style>
 </head>
 
 <body>
   <main>
-    <!-- À MODIFIER : nom, date et lieu de votre conférence. -->
-    <h1>Inscription à la conférence</h1>
-    <p class="infos">
-      <strong>Nom de la conférence</strong><br>
-      Samedi 15 novembre 2026 · Adresse du lieu, Ville
-    </p>
+    <header>
+      <p class="surtitre">Inscription</p>
+      <h1>Les Facettes subtiles de l’eau</h1>
+      <p class="sous-titre">Conférence et ateliers avec Franck RAJJOU</p>
+      <p class="lieu">
+        Les 20 et 21 novembre 2026<br>
+        8, avenue des Sports — 65150 Saint-Laurent-de-Neste
+      </p>
+      <p class="date-limite">
+        <strong>Inscription à effectuer avant le 5 novembre 2026.</strong>
+      </p>
+    </header>
 
-    <p class="intro" id="intro">
-      Inscrivez-vous à la conférence et à <strong>une ou deux sessions
-      d’atelier</strong>. Les champs marqués d’un astérisque (*) sont
-      obligatoires.
+    <p class="ferme" id="ferme" hidden>
+      Les inscriptions sont closes. Pour toute question, appelez le
+      <a href="tel:+33673108658">06 73 10 86 58</a>.
     </p>
 
     <!--
@@ -222,114 +279,144 @@
       action="https://formspree.io/f/VOTRE_ID_FORMSPREE"
       method="POST"
     >
-      <input type="hidden" name="_subject"
-             value="Nouvelle inscription à la conférence">
+      <input type="hidden" name="_subject" value="Nouvelle inscription — Facettes de l’eau">
+      <input type="hidden" name="montant" id="champMontant" value="">
 
-      <fieldset>
-        <legend>Vos coordonnées</legend>
-
-        <div class="grid">
-          <div class="field">
-            <label for="prenom">Prénom *</label>
-            <input id="prenom" name="prenom" type="text"
-                   autocomplete="given-name" maxlength="60" required>
-          </div>
-
-          <div class="field">
-            <label for="nom">Nom *</label>
-            <input id="nom" name="nom" type="text"
-                   autocomplete="family-name" maxlength="60" required>
-          </div>
-        </div>
-
-        <div class="grid">
-          <div class="field">
-            <label for="email">Adresse e-mail *</label>
-            <input id="email" name="email" type="email"
-                   autocomplete="email" maxlength="150" required>
-          </div>
-
-          <div class="field">
-            <label for="telephone">Téléphone</label>
-            <input id="telephone" name="telephone" type="tel"
-                   autocomplete="tel" maxlength="20">
-          </div>
-        </div>
-
-        <div class="field" style="margin-bottom: 0">
-          <label for="structure">Entreprise ou organisme</label>
-          <input id="structure" name="structure" type="text"
-                 autocomplete="organization" maxlength="150">
-        </div>
-      </fieldset>
-
-      <!-- À MODIFIER : titres et horaires des ateliers de chaque session. -->
-      <p class="intro" id="consigneAteliers">
-        Choisissez un atelier par session. Vous pouvez participer à une
-        seule session ou aux deux.
+      <h2>1. Vos coordonnées</h2>
+      <p class="consigne">
+        Tous les champs sont obligatoires. Merci de remplir un formulaire par
+        personne.
       </p>
 
-      <fieldset class="session">
-        <legend>Session 1 · 10 h 00 – 11 h 30</legend>
+      <div class="grid">
+        <div class="field">
+          <label for="nom">Nom</label>
+          <input id="nom" name="nom" type="text"
+                 autocomplete="family-name" maxlength="60" required>
+        </div>
 
-        <label class="atelier">
-          <input type="radio" name="session1" value="Atelier A">
-          <span>
-            <span class="titre">Atelier A : titre de l’atelier</span>
-            <span class="horaire">Animé par Prénom Nom</span>
-          </span>
-        </label>
+        <div class="field">
+          <label for="prenom">Prénom</label>
+          <input id="prenom" name="prenom" type="text"
+                 autocomplete="given-name" maxlength="60" required>
+        </div>
 
-        <label class="atelier">
-          <input type="radio" name="session1" value="Atelier B">
-          <span>
-            <span class="titre">Atelier B : titre de l’atelier</span>
-            <span class="horaire">Animé par Prénom Nom</span>
-          </span>
-        </label>
+        <div class="field">
+          <label for="email">Adresse e-mail</label>
+          <input id="email" name="email" type="email"
+                 autocomplete="email" maxlength="150" required>
+        </div>
 
-        <label class="atelier">
-          <input type="radio" name="session1" value="Aucun" checked>
-          <span>
-            <span class="titre">Je ne participe pas à cette session</span>
-          </span>
-        </label>
-      </fieldset>
-
-      <fieldset class="session">
-        <legend>Session 2 · 14 h 00 – 15 h 30</legend>
-
-        <label class="atelier">
-          <input type="radio" name="session2" value="Atelier C">
-          <span>
-            <span class="titre">Atelier C : titre de l’atelier</span>
-            <span class="horaire">Animé par Prénom Nom</span>
-          </span>
-        </label>
-
-        <label class="atelier">
-          <input type="radio" name="session2" value="Atelier D">
-          <span>
-            <span class="titre">Atelier D : titre de l’atelier</span>
-            <span class="horaire">Animé par Prénom Nom</span>
-          </span>
-        </label>
-
-        <label class="atelier">
-          <input type="radio" name="session2" value="Aucun" checked>
-          <span>
-            <span class="titre">Je ne participe pas à cette session</span>
-          </span>
-        </label>
-      </fieldset>
-
-      <div class="field">
-        <label for="besoins">Besoins particuliers</label>
-        <textarea id="besoins" name="besoins" maxlength="500"
-                  aria-describedby="compteur"
-                  placeholder="Accessibilité, régime alimentaire, question…"></textarea>
-        <p id="compteur" class="help">0 / 500 caractères</p>
+        <div class="field">
+          <label for="telephone">Numéro de téléphone</label>
+          <input id="telephone" name="telephone" type="tel"
+                 autocomplete="tel" maxlength="20" required
+                 pattern="[0-9 +.\(\)\-]{10,20}"
+                 title="Saisissez un numéro de téléphone valide, par exemple 06 12 34 56 78.">
+        </div>
       </div>
+
+      <h2>2. Votre participation</h2>
+      <p class="consigne">
+        Cochez les séances auxquelles vous souhaitez vous inscrire : la
+        conférence, un atelier, les deux ateliers, ou la conférence avec un ou
+        deux ateliers.
+      </p>
+
+      <label class="choix">
+        <input type="checkbox" id="conference" name="conference" value="Oui">
+        <span class="contenu">
+          <span class="titre">Conférence</span>
+          <span class="quand">Vendredi 20 novembre 2026 à 19 h 30</span>
+          <span class="detail">
+            Une soirée pour découvrir les différentes facettes de l’eau et
+            ouvrir la réflexion avant les ateliers.
+          </span>
+        </span>
+        <span class="prix">15 €</span>
+      </label>
+
+      <label class="choix">
+        <input type="checkbox" id="atelier1" name="atelier_1" value="Oui"
+               class="atelier">
+        <span class="contenu">
+          <span class="titre">Atelier 1</span>
+          <span class="quand">Samedi 21 novembre 2026, de 10 h 30 à 12 h 30</span>
+        </span>
+        <span class="prix" data-prix-atelier>25 €</span>
+      </label>
+
+      <label class="choix">
+        <input type="checkbox" id="atelier2" name="atelier_2" value="Oui"
+               class="atelier">
+        <span class="contenu">
+          <span class="titre">Atelier 2</span>
+          <span class="quand">Samedi 21 novembre 2026, de 14 h 30 à 17 h</span>
+        </span>
+        <span class="prix" data-prix-atelier>25 €</span>
+      </label>
+
+      <p class="reduction">
+        Une réduction de 5 € par atelier est accordée aux personnes inscrites
+        à la conférence : l’atelier est alors à 20 €.
+      </p>
+
+      <h2>3. Montant à régler</h2>
+
+      <div class="total" aria-live="polite">
+        <span id="libelleTotal">Aucune séance sélectionnée</span>
+        <strong id="montantTotal">0 €</strong>
+      </div>
+
+      <details>
+        <summary>Voir tous les tarifs</summary>
+        <table>
+          <thead>
+            <tr><th>Votre participation</th><th>Tarif</th></tr>
+          </thead>
+          <tbody id="grilleTarifs">
+            <tr data-combinaison="100"><td>Conférence seule</td><td>15 €</td></tr>
+            <tr data-combinaison="010"><td>Atelier 1 seul</td><td>25 €</td></tr>
+            <tr data-combinaison="001"><td>Atelier 2 seul</td><td>25 €</td></tr>
+            <tr data-combinaison="011"><td>Les deux ateliers, sans la conférence</td><td>50 €</td></tr>
+            <tr data-combinaison="110"><td>Conférence + atelier 1</td><td>35 €</td></tr>
+            <tr data-combinaison="101"><td>Conférence + atelier 2</td><td>35 €</td></tr>
+            <tr data-combinaison="111"><td>Conférence + les deux ateliers</td><td>55 €</td></tr>
+          </tbody>
+        </table>
+        <p class="help">
+          Les tarifs associant la conférence aux ateliers incluent la
+          réduction de 5 € par atelier.
+        </p>
+      </details>
+
+      <h2>4. Votre règlement</h2>
+      <p class="consigne">
+        Sélectionnez un mode de règlement. Les informations de paiement
+        s’afficheront après l’envoi de votre inscription.
+      </p>
+
+      <label class="choix">
+        <input type="radio" name="reglement" value="Carte bancaire" required>
+        <span class="contenu">
+          <span class="titre">Carte bancaire</span>
+          <span class="detail">Paiement en ligne</span>
+        </span>
+      </label>
+
+      <label class="choix">
+        <input type="radio" name="reglement" value="Virement bancaire">
+        <span class="contenu">
+          <span class="titre">Virement bancaire</span>
+          <span class="detail">Coordonnées bancaires fournies après l’envoi</span>
+        </span>
+      </label>
+
+      <h2>5. Envoyer votre inscription</h2>
+      <p class="consigne">
+        Avant d’envoyer le formulaire, merci de vérifier votre adresse e-mail
+        et les séances sélectionnées.
+      </p>
 
       <div class="piege" aria-hidden="true">
         <label for="_gotcha">Ne pas remplir ce champ</label>
@@ -341,54 +428,139 @@
         <input id="consentement" name="consentement" type="checkbox"
                value="Oui" required>
         <label for="consentement">
-          J’accepte que mes informations soient utilisées pour gérer mon
-          inscription à la conférence. *
+          J’accepte que mes informations soient utilisées uniquement pour
+          l’organisation de la conférence et des ateliers.
         </label>
       </div>
 
-      <div class="actions">
-        <button type="submit" id="envoyer">Valider mon inscription</button>
-        <button type="reset" class="secondary">Réinitialiser</button>
-      </div>
-
-      <p class="help">
-        Vos données servent uniquement à l’organisation de la conférence et
-        ne sont jamais cédées à des tiers.
-      </p>
+      <button type="submit" id="envoyer">Envoyer mon inscription</button>
 
       <p id="erreur" role="alert" hidden></p>
+
+      <p class="contact">
+        Les inscriptions doivent être effectuées avant le 5 novembre 2026.<br>
+        Pour toute question : <a href="tel:+33673108658">06 73 10 86 58</a>.
+      </p>
     </form>
 
-    <section
-      id="resultat"
-      aria-live="polite"
-      aria-atomic="true"
-      tabindex="-1"
-      hidden
-    ></section>
+    <section id="resultat" tabindex="-1" hidden>
+      <div class="merci">
+        <h2>Merci ! Votre demande d’inscription a bien été enregistrée.</h2>
+        <p>
+          Si vous n’avez pas encore effectué votre règlement, merci d’utiliser
+          les informations de paiement ci-dessous.
+        </p>
+        <p>Au plaisir de vous accueillir pour « Les Facettes subtiles de l’eau » !</p>
+      </div>
+
+      <div class="paiement" id="paiementCarte" hidden>
+        <h3>Régler <span class="montant-final"></span> par carte bancaire</h3>
+        <p id="texteCarte"></p>
+      </div>
+
+      <div class="paiement" id="paiementVirement" hidden>
+        <h3>Régler <span class="montant-final"></span> par virement bancaire</h3>
+        <dl id="coordonneesVirement"></dl>
+      </div>
+
+      <div class="paiement">
+        <h3>Récapitulatif de votre inscription</h3>
+        <dl id="recap"></dl>
+      </div>
+
+      <p class="contact">
+        Pour toute question : <a href="tel:+33673108658">06 73 10 86 58</a>.
+      </p>
+    </section>
   </main>
 
   <script>
+    /* ===================== À MODIFIER ===================== */
+    const CONFIG = {
+      // Dernier jour où l’on peut s’inscrire (inclus), au format AAAA-MM-JJ.
+      dateLimite: "2026-11-05",
+
+      // Lien de paiement par carte bancaire (SumUp, HelloAsso, Stripe…).
+      // Laissez "" tant que vous ne l’avez pas.
+      lienCarte: "",
+
+      // Coordonnées bancaires pour le virement.
+      // Laissez "" tant que vous ne les avez pas.
+      virement: {
+        titulaire: "",
+        iban: "",
+        bic: ""
+      }
+    };
+    /* ====================================================== */
+
+    const PRIX_CONFERENCE = 15;
+    const PRIX_ATELIER = 25;
+    const REDUCTION_ATELIER = 5;
+
     const form = document.querySelector("#formulaire");
-    const besoins = document.querySelector("#besoins");
+    const conference = document.querySelector("#conference");
+    const ateliers = [...document.querySelectorAll(".atelier")];
     const boutonEnvoyer = document.querySelector("#envoyer");
     const erreur = document.querySelector("#erreur");
-    const intro = document.querySelector("#intro");
     const resultat = document.querySelector("#resultat");
 
-    // Libellé complet de l’atelier choisi dans une session, ou null.
-    function atelierChoisi(session) {
-      const choix = form.querySelector(`input[name="${session}"]:checked`);
-      if (!choix || choix.value === "Aucun") return null;
+    const euros = n => `${n} €`;
 
-      const titre = choix.closest(".atelier").querySelector(".titre");
-      const horaire = choix.closest("fieldset").querySelector("legend");
-      return `${titre.textContent} (${horaire.textContent})`;
+    function calculer() {
+      const avecConference = conference.checked;
+      const nbAteliers = ateliers.filter(a => a.checked).length;
+      const prixAtelier = avecConference
+        ? PRIX_ATELIER - REDUCTION_ATELIER
+        : PRIX_ATELIER;
+
+      return {
+        avecConference,
+        prixAtelier,
+        total: (avecConference ? PRIX_CONFERENCE : 0) + nbAteliers * prixAtelier
+      };
     }
 
-    function actualiserCompteur() {
-      document.querySelector("#compteur").textContent =
-        `${besoins.value.length} / 500 caractères`;
+    function libelleParticipation() {
+      const [a1, a2] = ateliers.map(a => a.checked);
+      let partieAteliers = "";
+
+      if (a1 && a2) partieAteliers = "les deux ateliers";
+      else if (a1) partieAteliers = "atelier 1";
+      else if (a2) partieAteliers = "atelier 2";
+
+      if (conference.checked) {
+        return partieAteliers ? `Conférence + ${partieAteliers}` : "Conférence seule";
+      }
+      if (!partieAteliers) return "";
+      const texte = partieAteliers + (a1 && a2 ? ", sans la conférence" : " seul");
+      return texte[0].toUpperCase() + texte.slice(1);
+    }
+
+    function actualiserMontant() {
+      const { total, avecConference, prixAtelier } = calculer();
+
+      document.querySelector("#montantTotal").textContent = euros(total);
+      document.querySelector("#libelleTotal").textContent =
+        libelleParticipation() || "Aucune séance sélectionnée";
+      document.querySelector("#champMontant").value = euros(total);
+
+      // Prix des ateliers affiché avec la réduction quand elle s’applique.
+      document.querySelectorAll("[data-prix-atelier]").forEach(prix => {
+        prix.innerHTML = avecConference
+          ? `<del>${euros(PRIX_ATELIER)}</del>${euros(prixAtelier)}`
+          : euros(PRIX_ATELIER);
+      });
+
+      // Ligne correspondante surlignée dans la grille des tarifs.
+      const combinaison = [conference, ...ateliers]
+        .map(c => (c.checked ? "1" : "0"))
+        .join("");
+      document.querySelectorAll("#grilleTarifs tr").forEach(ligne => {
+        ligne.classList.toggle("actif", ligne.dataset.combinaison === combinaison);
+      });
+
+      afficherErreur("");
     }
 
     function afficherErreur(texte) {
@@ -396,18 +568,19 @@
       erreur.hidden = !texte;
     }
 
-    besoins.addEventListener("input", actualiserCompteur);
+    function inscriptionsCloses() {
+      return new Date() > new Date(`${CONFIG.dateLimite}T23:59:59`);
+    }
 
-    // Masquer le message d’erreur dès que l’on change un choix d’atelier.
-    form.addEventListener("change", event => {
-      if (event.target.type === "radio") afficherErreur("");
-    });
+    [conference, ...ateliers].forEach(c =>
+      c.addEventListener("change", actualiserMontant)
+    );
 
     form.addEventListener("submit", async event => {
       event.preventDefault();
       afficherErreur("");
 
-      // Refuser un prénom ou un nom composé uniquement d’espaces.
+      // Refuser un nom ou un prénom composé uniquement d’espaces.
       form.querySelectorAll('input[type="text"]').forEach(champ => {
         champ.setCustomValidity(
           champ.required && !champ.value.trim()
@@ -415,16 +588,20 @@
             : ""
         );
       });
+
       if (!form.reportValidity()) return;
 
-      const ateliers = [atelierChoisi("session1"), atelierChoisi("session2")]
-        .filter(Boolean);
-
-      if (ateliers.length === 0) {
+      const { total } = calculer();
+      if (total === 0) {
         afficherErreur(
-          "Veuillez choisir un atelier dans au moins une des deux sessions."
+          "Veuillez cocher au moins une séance : la conférence ou un atelier."
         );
-        form.querySelector(".session input").focus();
+        conference.focus();
+        return;
+      }
+
+      if (inscriptionsCloses()) {
+        afficherErreur("Les inscriptions sont closes.");
         return;
       }
 
@@ -437,12 +614,15 @@
       }
 
       const data = new FormData(form);
-      data.set("session1", atelierChoisi("session1") || "Aucun atelier");
-      data.set("session2", atelierChoisi("session2") || "Aucun atelier");
+      const participation = libelleParticipation();
+      data.set("participation", participation);
+      data.set("conference", conference.checked ? "Oui" : "Non");
+      data.set("atelier_1", ateliers[0].checked ? "Oui" : "Non");
+      data.set("atelier_2", ateliers[1].checked ? "Oui" : "Non");
       data.set(
         "_subject",
-        `Nouvelle inscription : ${data.get("prenom").trim()} ` +
-        `${data.get("nom").trim()}`
+        `Inscription : ${data.get("prenom").trim()} ` +
+        `${data.get("nom").trim().toUpperCase()} — ${participation} — ${euros(total)}`
       );
 
       boutonEnvoyer.disabled = true;
@@ -457,62 +637,83 @@
 
         if (!reponse.ok) throw new Error(`Erreur ${reponse.status}`);
 
-        afficherConfirmation(data, ateliers);
+        afficherConfirmation(data, participation, total);
       } catch (e) {
         console.error(e);
         afficherErreur(
           "Votre inscription n’a pas pu être envoyée. Vérifiez votre " +
-          "connexion puis réessayez dans quelques instants."
+          "connexion puis réessayez dans quelques instants. Si le problème " +
+          "persiste, appelez le 06 73 10 86 58."
         );
       } finally {
         boutonEnvoyer.disabled = false;
-        boutonEnvoyer.textContent = "Valider mon inscription";
+        boutonEnvoyer.textContent = "Envoyer mon inscription";
       }
     });
 
-    function afficherConfirmation(data, ateliers) {
-      const lignes = [
-        ["Nom", `${data.get("prenom")} ${data.get("nom")}`],
-        ["E-mail", data.get("email")]
-      ];
-
-      if (data.get("telephone")) {
-        lignes.push(["Téléphone", data.get("telephone")]);
-      }
-      if (data.get("structure")) {
-        lignes.push(["Entreprise ou organisme", data.get("structure")]);
-      }
-
-      lignes.push([
-        ateliers.length > 1 ? "Vos ateliers" : "Votre atelier",
-        ateliers.join("\n")
-      ]);
-
-      if (data.get("besoins")) {
-        lignes.push(["Besoins particuliers", data.get("besoins")]);
-      }
-
-      const titre = document.createElement("h2");
-      titre.textContent = "Merci, votre inscription est enregistrée !";
-
-      const note = document.createElement("p");
-      note.textContent = "Voici le récapitulatif de votre inscription :";
-
-      const liste = document.createElement("dl");
-
+    function ajouterLignes(liste, lignes) {
       lignes.forEach(([libelle, valeur]) => {
         const terme = document.createElement("dt");
         const description = document.createElement("dd");
-
         terme.textContent = libelle;
-        description.textContent = String(valeur ?? "").trim();
-
+        description.textContent = valeur;
         liste.append(terme, description);
       });
+    }
 
-      resultat.replaceChildren(titre, note, liste);
+    function afficherConfirmation(data, participation, total) {
+      const nom =
+        `${data.get("prenom").trim()} ${data.get("nom").trim().toUpperCase()}`;
+
+      document.querySelectorAll(".montant-final").forEach(m => {
+        m.textContent = euros(total);
+      });
+
+      if (data.get("reglement") === "Carte bancaire") {
+        const texte = document.querySelector("#texteCarte");
+        if (CONFIG.lienCarte) {
+          const lien = document.createElement("a");
+          lien.href = CONFIG.lienCarte;
+          lien.target = "_blank";
+          lien.rel = "noopener";
+          lien.className = "bouton";
+          lien.textContent = `Payer ${euros(total)} par carte bancaire`;
+          texte.replaceChildren(lien);
+        } else {
+          texte.textContent =
+            "Le lien de paiement par carte bancaire vous sera envoyé par e-mail.";
+        }
+        document.querySelector("#paiementCarte").hidden = false;
+      } else {
+        const liste = document.querySelector("#coordonneesVirement");
+        const { titulaire, iban, bic } = CONFIG.virement;
+        if (iban) {
+          ajouterLignes(liste, [
+            ["Titulaire du compte", titulaire],
+            ["IBAN", iban],
+            ["BIC", bic],
+            ["Montant", euros(total)],
+            ["Libellé du virement", `Facettes de l’eau — ${nom}`]
+          ].filter(([, valeur]) => valeur));
+        } else {
+          const note = document.createElement("dd");
+          note.textContent =
+            "Les coordonnées bancaires pour le virement vous seront envoyées par e-mail.";
+          liste.replaceChildren(note);
+        }
+        document.querySelector("#paiementVirement").hidden = false;
+      }
+
+      ajouterLignes(document.querySelector("#recap"), [
+        ["Nom", nom],
+        ["E-mail", data.get("email")],
+        ["Téléphone", data.get("telephone")],
+        ["Participation", participation],
+        ["Montant à régler", euros(total)],
+        ["Mode de règlement", data.get("reglement")]
+      ]);
+
       form.hidden = true;
-      intro.hidden = true;
       resultat.hidden = false;
       resultat.focus();
       resultat.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -520,24 +721,15 @@
 
     // Effacer une erreur personnalisée dès la modification du champ.
     form.addEventListener("input", event => {
-      if (event.target.type === "text") {
-        event.target.setCustomValidity("");
-      }
+      if (event.target.type === "text") event.target.setCustomValidity("");
     });
 
-    form.addEventListener("reset", () => {
-      // Attendre que le navigateur ait réinitialisé les valeurs.
-      setTimeout(() => {
-        form.querySelectorAll("input, textarea").forEach(champ => {
-          champ.setCustomValidity("");
-        });
+    if (inscriptionsCloses()) {
+      form.hidden = true;
+      document.querySelector("#ferme").hidden = false;
+    }
 
-        actualiserCompteur();
-        afficherErreur("");
-      }, 0);
-    });
-
-    actualiserCompteur();
+    actualiserMontant();
   </script>
 </body>
 </html>

@@ -4,39 +4,33 @@ A Pen created on CodePen.
 
 Original URL: [https://codepen.io/franck3615/pen/wBBEgZL](https://codepen.io/franck3615/pen/wBBEgZL).
 
-## Formulaire de contact (`formulaire.html`)
+## Formulaire d’inscription à la conférence (`formulaire.html`)
 
-Formulaire « Parlons de votre projet » prêt à mettre en ligne. Les demandes
-sont envoyées par e-mail via [Formspree](https://formspree.io) : aucun serveur
-ni PHP n’est nécessaire, le fichier fonctionne sur n’importe quel hébergement.
+Les participants s’inscrivent à la conférence et choisissent un atelier dans
+une ou deux sessions. Chaque inscription vous est envoyée par e-mail via
+[Formspree](https://formspree.io) : aucun serveur ni PHP n’est nécessaire.
 
-### Mise en service (5 minutes)
+### À personnaliser dans `formulaire.html`
+
+Les passages à modifier sont signalés par un commentaire `À MODIFIER` :
+
+- le nom, la date et le lieu de la conférence ;
+- les horaires des deux sessions, ainsi que le titre et l’animateur de chaque
+  atelier (vous pouvez ajouter ou supprimer des ateliers en copiant un bloc
+  `<label class="atelier">…</label>`) ;
+- l’identifiant Formspree (voir ci-dessous).
+
+### Recevoir les inscriptions (5 minutes)
 
 1. Créez un compte gratuit sur <https://formspree.io> avec l’adresse e-mail
-   qui doit recevoir les demandes, puis validez l’e-mail de confirmation.
-2. Cliquez sur **New Form**, donnez-lui un nom (ex. « Contact site »).
+   qui doit recevoir les inscriptions, puis validez l’e-mail de confirmation.
+2. Cliquez sur **New Form** et nommez-le (ex. « Inscriptions conférence »).
 3. Formspree affiche une adresse du type `https://formspree.io/f/xyzabcd`.
    Copiez l’identifiant final (`xyzabcd`).
-4. Dans `formulaire.html`, remplacez `VOTRE_ID_FORMSPREE` par cet identifiant
-   (une seule occurrence, dans la balise `<form action="…">`).
-5. Déposez `formulaire.html` sur votre hébergement, ouvrez la page en ligne et
-   envoyez une demande de test. La première soumission peut demander une
-   confirmation dans votre boîte mail.
+4. Dans `formulaire.html`, remplacez `VOTRE_ID_FORMSPREE` par cet identifiant.
+5. Mettez `formulaire.html` en ligne et faites une inscription de test.
 
-Tant que l’identifiant n’est pas renseigné, le formulaire affiche un message
-« pas encore configuré » au lieu d’envoyer quoi que ce soit.
-
-### Ce que fait le formulaire
-
-- champs conditionnels (entreprise, précisions de devis, « autre demande ») ;
-- validation des champs obligatoires, y compris les saisies vides d’espaces ;
-- case de consentement obligatoire (RGPD) ;
-- protection anti-spam par champ piège (`_gotcha`) ;
-- objet de l’e-mail reçu adapté au type de demande ;
-- réponse directe : l’adresse du visiteur est utilisée comme adresse de
-  réponse dans l’e-mail reçu ;
-- message de confirmation avec récapitulatif, ou message d’erreur si l’envoi
-  échoue ;
-- fonctionne aussi sans JavaScript (envoi classique vers Formspree).
-
-L’offre gratuite de Formspree couvre 50 demandes par mois.
+Tant que l’identifiant n’est pas renseigné, le formulaire affiche
+« pas encore configuré » et n’envoie rien. La liste des inscrits peut être
+exportée depuis Formspree (fichier CSV, à ouvrir dans Excel ou Google Sheets).
+L’offre gratuite de Formspree couvre 50 inscriptions par mois.

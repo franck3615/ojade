@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Parlons de votre projet</title>
-  <meta name="description" content="Contactez-nous pour une demande d’information ou de devis.">
+  <title>Inscription à la conférence</title>
+  <meta name="description" content="Inscrivez-vous à la conférence et choisissez vos ateliers.">
 
   <style>
     :root {
       --primary: #3158d5;
       --background: #f3f5fa;
       --text: #202939;
+      --muted: #566176;
       --border: #cbd2df;
       --error: #b42318;
     }
@@ -36,8 +37,13 @@
       box-shadow: 0 12px 40px #20293912;
     }
 
-    h1 { margin-top: 0; }
-    .intro, .help { color: #566176; }
+    h1 { margin: 0 0 8px; }
+    .infos {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+    .infos strong { color: var(--text); }
+    .intro, .help { color: var(--muted); }
     .help { margin: 6px 0 0; font-size: .88rem; }
 
     .grid {
@@ -48,17 +54,14 @@
 
     .field { margin-bottom: 20px; }
 
-    label, legend {
-      font-weight: 600;
-    }
+    label, legend { font-weight: 600; }
 
     .field > label {
       display: block;
       margin-bottom: 7px;
     }
 
-    input:not([type="checkbox"]),
-    select,
+    input:not([type="checkbox"], [type="radio"]),
     textarea {
       width: 100%;
       padding: 12px;
@@ -70,12 +73,11 @@
     }
 
     textarea {
-      min-height: 130px;
+      min-height: 100px;
       resize: vertical;
     }
 
     input:focus-visible,
-    select:focus-visible,
     textarea:focus-visible,
     button:focus-visible {
       outline: 3px solid #3158d540;
@@ -89,7 +91,34 @@
       border-radius: 10px;
     }
 
-    fieldset .field:last-child { margin-bottom: 0; }
+    /* Ateliers */
+    .session .atelier:first-of-type { margin-top: 4px; }
+
+    .atelier {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .atelier:has(input:checked) {
+      border-color: var(--primary);
+      background: #f1f4fd;
+    }
+
+    .atelier input {
+      flex: none;
+      margin-top: 5px;
+      accent-color: var(--primary);
+    }
+
+    .atelier span { display: block; }
+    .atelier .titre { font-weight: 600; }
+    .atelier .horaire { color: var(--muted); font-size: .9rem; }
 
     .checkbox {
       display: flex;
@@ -170,109 +199,136 @@
 
 <body>
   <main>
-    <h1>Parlons de votre projet</h1>
+    <!-- À MODIFIER : nom, date et lieu de votre conférence. -->
+    <h1>Inscription à la conférence</h1>
+    <p class="infos">
+      <strong>Nom de la conférence</strong><br>
+      Samedi 15 novembre 2026 · Adresse du lieu, Ville
+    </p>
+
     <p class="intro" id="intro">
-      Les champs marqués d’un astérisque (*) sont obligatoires.
+      Inscrivez-vous à la conférence et à <strong>une ou deux sessions
+      d’atelier</strong>. Les champs marqués d’un astérisque (*) sont
+      obligatoires.
     </p>
 
     <!--
-      CONFIGURATION : remplacez VOTRE_ID_FORMSPREE ci-dessous par
-      l’identifiant de votre formulaire Formspree (ex. : xyzabcd).
-      Voir le fichier README.md pour la marche à suivre.
+      À MODIFIER : remplacez VOTRE_ID_FORMSPREE par l’identifiant de votre
+      formulaire Formspree (voir README.md). C’est ce qui vous permet de
+      recevoir chaque inscription par e-mail.
     -->
     <form
       id="formulaire"
       action="https://formspree.io/f/VOTRE_ID_FORMSPREE"
       method="POST"
     >
-      <input type="hidden" name="_subject" id="sujet"
-             value="Nouvelle demande depuis le site">
+      <input type="hidden" name="_subject"
+             value="Nouvelle inscription à la conférence">
 
-      <div class="grid">
-        <div class="field">
-          <label for="nom">Nom complet *</label>
-          <input
-            id="nom" name="nom" type="text"
-            autocomplete="name" maxlength="100" required
-          >
+      <fieldset>
+        <legend>Vos coordonnées</legend>
+
+        <div class="grid">
+          <div class="field">
+            <label for="prenom">Prénom *</label>
+            <input id="prenom" name="prenom" type="text"
+                   autocomplete="given-name" maxlength="60" required>
+          </div>
+
+          <div class="field">
+            <label for="nom">Nom *</label>
+            <input id="nom" name="nom" type="text"
+                   autocomplete="family-name" maxlength="60" required>
+          </div>
         </div>
 
-        <div class="field">
-          <label for="email">Adresse e-mail *</label>
-          <input
-            id="email" name="email" type="email"
-            autocomplete="email" maxlength="150" required
-          >
-        </div>
-      </div>
+        <div class="grid">
+          <div class="field">
+            <label for="email">Adresse e-mail *</label>
+            <input id="email" name="email" type="email"
+                   autocomplete="email" maxlength="150" required>
+          </div>
 
-      <div class="field">
-        <label for="profil">Vous êtes… *</label>
-        <select id="profil" name="profil" required>
-          <option value="">Sélectionnez votre profil</option>
-          <option value="Particulier">Un particulier</option>
-          <option value="Professionnel">Un professionnel</option>
-        </select>
-      </div>
-
-      <fieldset id="blocEntreprise" hidden disabled>
-        <legend>Votre entreprise</legend>
-
-        <div class="field">
-          <label for="entreprise">Nom de l’entreprise *</label>
-          <input
-            id="entreprise" name="entreprise" type="text"
-            autocomplete="organization" maxlength="150"
-          >
-        </div>
-      </fieldset>
-
-      <div class="field">
-        <label for="demande">Type de demande *</label>
-        <select id="demande" name="demande" required>
-          <option value="">Choisissez une demande</option>
-          <option value="Demande d’information">Demande d’information</option>
-          <option value="Demande de devis">Demande de devis</option>
-          <option value="Autre demande">Autre demande</option>
-        </select>
-      </div>
-
-      <fieldset id="blocDevis" hidden disabled>
-        <legend>Précisions pour le devis</legend>
-
-        <div class="field">
-          <label for="budget">Budget estimé *</label>
-          <select id="budget" name="budget">
-            <option value="">Sélectionnez une tranche</option>
-            <option value="Moins de 500 €">Moins de 500 €</option>
-            <option value="500 à 2 000 €">500 à 2 000 €</option>
-            <option value="Plus de 2 000 €">Plus de 2 000 €</option>
-            <option value="À définir">À définir</option>
-          </select>
+          <div class="field">
+            <label for="telephone">Téléphone</label>
+            <input id="telephone" name="telephone" type="tel"
+                   autocomplete="tel" maxlength="20">
+          </div>
         </div>
 
-        <div class="field">
-          <label for="date">Date souhaitée</label>
-          <input id="date" name="date_souhaitee" type="date">
+        <div class="field" style="margin-bottom: 0">
+          <label for="structure">Entreprise ou organisme</label>
+          <input id="structure" name="structure" type="text"
+                 autocomplete="organization" maxlength="150">
         </div>
       </fieldset>
 
-      <div class="field" id="blocAutre" hidden>
-        <label for="precision">Précisez votre demande *</label>
-        <input
-          id="precision" name="precision" type="text"
-          maxlength="150" disabled
-        >
-      </div>
+      <!-- À MODIFIER : titres et horaires des ateliers de chaque session. -->
+      <p class="intro" id="consigneAteliers">
+        Choisissez un atelier par session. Vous pouvez participer à une
+        seule session ou aux deux.
+      </p>
+
+      <fieldset class="session">
+        <legend>Session 1 · 10 h 00 – 11 h 30</legend>
+
+        <label class="atelier">
+          <input type="radio" name="session1" value="Atelier A">
+          <span>
+            <span class="titre">Atelier A : titre de l’atelier</span>
+            <span class="horaire">Animé par Prénom Nom</span>
+          </span>
+        </label>
+
+        <label class="atelier">
+          <input type="radio" name="session1" value="Atelier B">
+          <span>
+            <span class="titre">Atelier B : titre de l’atelier</span>
+            <span class="horaire">Animé par Prénom Nom</span>
+          </span>
+        </label>
+
+        <label class="atelier">
+          <input type="radio" name="session1" value="Aucun" checked>
+          <span>
+            <span class="titre">Je ne participe pas à cette session</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <fieldset class="session">
+        <legend>Session 2 · 14 h 00 – 15 h 30</legend>
+
+        <label class="atelier">
+          <input type="radio" name="session2" value="Atelier C">
+          <span>
+            <span class="titre">Atelier C : titre de l’atelier</span>
+            <span class="horaire">Animé par Prénom Nom</span>
+          </span>
+        </label>
+
+        <label class="atelier">
+          <input type="radio" name="session2" value="Atelier D">
+          <span>
+            <span class="titre">Atelier D : titre de l’atelier</span>
+            <span class="horaire">Animé par Prénom Nom</span>
+          </span>
+        </label>
+
+        <label class="atelier">
+          <input type="radio" name="session2" value="Aucun" checked>
+          <span>
+            <span class="titre">Je ne participe pas à cette session</span>
+          </span>
+        </label>
+      </fieldset>
 
       <div class="field">
-        <label for="message">Votre message *</label>
-        <textarea
-          id="message" name="message"
-          maxlength="1000" required
-          aria-describedby="compteur"
-        ></textarea>
-        <p id="compteur" class="help">0 / 1 000 caractères</p>
+        <label for="besoins">Besoins particuliers</label>
+        <textarea id="besoins" name="besoins" maxlength="500"
+                  aria-describedby="compteur"
+                  placeholder="Accessibilité, régime alimentaire, question…"></textarea>
+        <p id="compteur" class="help">0 / 500 caractères</p>
       </div>
 
       <div class="piege" aria-hidden="true">
@@ -285,19 +341,19 @@
         <input id="consentement" name="consentement" type="checkbox"
                value="Oui" required>
         <label for="consentement">
-          J’accepte que les informations saisies soient utilisées
-          pour répondre à ma demande. *
+          J’accepte que mes informations soient utilisées pour gérer mon
+          inscription à la conférence. *
         </label>
       </div>
 
       <div class="actions">
-        <button type="submit" id="envoyer">Envoyer ma demande</button>
+        <button type="submit" id="envoyer">Valider mon inscription</button>
         <button type="reset" class="secondary">Réinitialiser</button>
       </div>
 
       <p class="help">
-        Vos données servent uniquement à traiter votre demande et ne sont
-        jamais cédées à des tiers.
+        Vos données servent uniquement à l’organisation de la conférence et
+        ne sont jamais cédées à des tiers.
       </p>
 
       <p id="erreur" role="alert" hidden></p>
@@ -314,57 +370,25 @@
 
   <script>
     const form = document.querySelector("#formulaire");
-    const profil = document.querySelector("#profil");
-    const demande = document.querySelector("#demande");
-    const message = document.querySelector("#message");
-    const sujet = document.querySelector("#sujet");
+    const besoins = document.querySelector("#besoins");
     const boutonEnvoyer = document.querySelector("#envoyer");
     const erreur = document.querySelector("#erreur");
     const intro = document.querySelector("#intro");
     const resultat = document.querySelector("#resultat");
 
-    // Empêcher de choisir une date passée.
-    document.querySelector("#date").min =
-      new Date().toLocaleDateString("sv-SE"); // format AAAA-MM-JJ
+    // Libellé complet de l’atelier choisi dans une session, ou null.
+    function atelierChoisi(session) {
+      const choix = form.querySelector(`input[name="${session}"]:checked`);
+      if (!choix || choix.value === "Aucun") return null;
 
-    function afficherBloc(id, visible, champsObligatoires = []) {
-      const bloc = document.getElementById(id);
-      bloc.hidden = !visible;
-
-      if (bloc.tagName === "FIELDSET") {
-        bloc.disabled = !visible;
-      }
-
-      bloc.querySelectorAll("input, select, textarea").forEach(champ => {
-        champ.disabled = !visible;
-        champ.required =
-          visible && champsObligatoires.includes(champ.id);
-      });
-    }
-
-    function actualiserChamps() {
-      afficherBloc(
-        "blocEntreprise",
-        profil.value === "Professionnel",
-        ["entreprise"]
-      );
-
-      afficherBloc(
-        "blocDevis",
-        demande.value === "Demande de devis",
-        ["budget"]
-      );
-
-      afficherBloc(
-        "blocAutre",
-        demande.value === "Autre demande",
-        ["precision"]
-      );
+      const titre = choix.closest(".atelier").querySelector(".titre");
+      const horaire = choix.closest("fieldset").querySelector("legend");
+      return `${titre.textContent} (${horaire.textContent})`;
     }
 
     function actualiserCompteur() {
       document.querySelector("#compteur").textContent =
-        `${message.value.length} / 1 000 caractères`;
+        `${besoins.value.length} / 500 caractères`;
     }
 
     function afficherErreur(texte) {
@@ -372,24 +396,37 @@
       erreur.hidden = !texte;
     }
 
-    profil.addEventListener("change", actualiserChamps);
-    demande.addEventListener("change", actualiserChamps);
-    message.addEventListener("input", actualiserCompteur);
+    besoins.addEventListener("input", actualiserCompteur);
+
+    // Masquer le message d’erreur dès que l’on change un choix d’atelier.
+    form.addEventListener("change", event => {
+      if (event.target.type === "radio") afficherErreur("");
+    });
 
     form.addEventListener("submit", async event => {
       event.preventDefault();
       afficherErreur("");
 
-      // Refuser un nom ou un message composé uniquement d’espaces.
-      form.querySelectorAll('input[type="text"], textarea').forEach(champ => {
+      // Refuser un prénom ou un nom composé uniquement d’espaces.
+      form.querySelectorAll('input[type="text"]').forEach(champ => {
         champ.setCustomValidity(
-          !champ.disabled && champ.required && !champ.value.trim()
+          champ.required && !champ.value.trim()
             ? "Veuillez saisir un texte, pas uniquement des espaces."
             : ""
         );
       });
-
       if (!form.reportValidity()) return;
+
+      const ateliers = [atelierChoisi("session1"), atelierChoisi("session2")]
+        .filter(Boolean);
+
+      if (ateliers.length === 0) {
+        afficherErreur(
+          "Veuillez choisir un atelier dans au moins une des deux sessions."
+        );
+        form.querySelector(".session input").focus();
+        return;
+      }
 
       if (form.action.includes("VOTRE_ID_FORMSPREE")) {
         afficherErreur(
@@ -400,8 +437,13 @@
       }
 
       const data = new FormData(form);
-      sujet.value = `Nouvelle demande depuis le site : ${demande.value}`;
-      data.set("_subject", sujet.value);
+      data.set("session1", atelierChoisi("session1") || "Aucun atelier");
+      data.set("session2", atelierChoisi("session2") || "Aucun atelier");
+      data.set(
+        "_subject",
+        `Nouvelle inscription : ${data.get("prenom").trim()} ` +
+        `${data.get("nom").trim()}`
+      );
 
       boutonEnvoyer.disabled = true;
       boutonEnvoyer.textContent = "Envoi en cours…";
@@ -413,62 +455,48 @@
           headers: { Accept: "application/json" }
         });
 
-        if (!reponse.ok) {
-          const details = await reponse.json().catch(() => ({}));
-          const messages = (details.errors || [])
-            .map(e => e.message)
-            .join(" ");
-          throw new Error(messages || `Erreur ${reponse.status}`);
-        }
+        if (!reponse.ok) throw new Error(`Erreur ${reponse.status}`);
 
-        afficherConfirmation(data);
+        afficherConfirmation(data, ateliers);
       } catch (e) {
         console.error(e);
         afficherErreur(
-          "Votre demande n’a pas pu être envoyée. Vérifiez votre " +
+          "Votre inscription n’a pas pu être envoyée. Vérifiez votre " +
           "connexion puis réessayez dans quelques instants."
         );
       } finally {
         boutonEnvoyer.disabled = false;
-        boutonEnvoyer.textContent = "Envoyer ma demande";
+        boutonEnvoyer.textContent = "Valider mon inscription";
       }
     });
 
-    function afficherConfirmation(data) {
+    function afficherConfirmation(data, ateliers) {
       const lignes = [
-        ["Nom", data.get("nom")],
-        ["E-mail", data.get("email")],
-        ["Profil", data.get("profil")]
+        ["Nom", `${data.get("prenom")} ${data.get("nom")}`],
+        ["E-mail", data.get("email")]
       ];
 
-      if (data.has("entreprise")) {
-        lignes.push(["Entreprise", data.get("entreprise")]);
+      if (data.get("telephone")) {
+        lignes.push(["Téléphone", data.get("telephone")]);
+      }
+      if (data.get("structure")) {
+        lignes.push(["Entreprise ou organisme", data.get("structure")]);
       }
 
-      lignes.push(["Demande", data.get("demande")]);
+      lignes.push([
+        ateliers.length > 1 ? "Vos ateliers" : "Votre atelier",
+        ateliers.join("\n")
+      ]);
 
-      if (data.has("budget")) {
-        lignes.push(["Budget", data.get("budget")]);
+      if (data.get("besoins")) {
+        lignes.push(["Besoins particuliers", data.get("besoins")]);
       }
-
-      if (data.get("date_souhaitee")) {
-        const [annee, mois, jour] = data.get("date_souhaitee").split("-");
-        lignes.push(["Date souhaitée", `${jour}/${mois}/${annee}`]);
-      }
-
-      if (data.has("precision")) {
-        lignes.push(["Précision", data.get("precision")]);
-      }
-
-      lignes.push(["Message", data.get("message")]);
 
       const titre = document.createElement("h2");
-      titre.textContent = "Merci, votre demande a bien été envoyée !";
+      titre.textContent = "Merci, votre inscription est enregistrée !";
 
       const note = document.createElement("p");
-      note.textContent =
-        "Nous vous répondrons dans les meilleurs délais. " +
-        "Voici le récapitulatif de votre demande :";
+      note.textContent = "Voici le récapitulatif de votre inscription :";
 
       const liste = document.createElement("dl");
 
@@ -492,7 +520,7 @@
 
     // Effacer une erreur personnalisée dès la modification du champ.
     form.addEventListener("input", event => {
-      if (typeof event.target.setCustomValidity === "function") {
+      if (event.target.type === "text") {
         event.target.setCustomValidity("");
       }
     });
@@ -500,17 +528,15 @@
     form.addEventListener("reset", () => {
       // Attendre que le navigateur ait réinitialisé les valeurs.
       setTimeout(() => {
-        form.querySelectorAll("input, select, textarea").forEach(champ => {
+        form.querySelectorAll("input, textarea").forEach(champ => {
           champ.setCustomValidity("");
         });
 
-        actualiserChamps();
         actualiserCompteur();
         afficherErreur("");
       }, 0);
     });
 
-    actualiserChamps();
     actualiserCompteur();
   </script>
 </body>

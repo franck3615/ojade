@@ -400,7 +400,7 @@
         <input type="radio" name="reglement" value="Carte bancaire" required>
         <span class="contenu">
           <span class="titre">Carte bancaire</span>
-          <span class="detail">Paiement en ligne</span>
+          <span class="detail">Paiement en ligne sécurisé par Stripe</span>
         </span>
       </label>
 
@@ -408,7 +408,7 @@
         <input type="radio" name="reglement" value="Virement bancaire">
         <span class="contenu">
           <span class="titre">Virement bancaire</span>
-          <span class="detail">Coordonnées bancaires fournies après l’envoi</span>
+          <span class="detail">IBAN affiché après l’envoi de votre inscription</span>
         </span>
       </label>
 
@@ -480,16 +480,14 @@
       // Dernier jour où l’on peut s’inscrire (inclus), au format AAAA-MM-JJ.
       dateLimite: "2026-11-05",
 
-      // Lien de paiement par carte bancaire (SumUp, HelloAsso, Stripe…).
-      // Laissez "" tant que vous ne l’avez pas.
-      lienCarte: "",
+      // Lien de paiement par carte bancaire (Stripe).
+      lienCarte: "https://buy.stripe.com/7sI6si7itgOp3vibIM",
 
       // Coordonnées bancaires pour le virement.
-      // Laissez "" tant que vous ne les avez pas.
       virement: {
-        titulaire: "",
-        iban: "",
-        bic: ""
+        titulaire: "Ojade — 10 rue de Penthièvre, 75008 Paris",
+        iban: "FR76 3000 3043 0700 0200 3929 930",
+        bic: "SOGEFRPP"
       }
     };
     /* ====================================================== */
@@ -664,6 +662,8 @@
     function afficherConfirmation(data, participation, total) {
       const nom =
         `${data.get("prenom").trim()} ${data.get("nom").trim().toUpperCase()}`;
+      // Sans accents, pour Stripe et le libellé du virement.
+      const nomSimple = nom.normalize("NFD").replace(/[̀-ͯ]/g, "");
 
       document.querySelectorAll(".montant-final").forEach(m => {
         m.textContent = euros(total);
@@ -672,8 +672,17 @@
       if (data.get("reglement") === "Carte bancaire") {
         const texte = document.querySelector("#texteCarte");
         if (CONFIG.lienCarte) {
+          // Pré-remplir l’e-mail sur Stripe et y rattacher le nom du
+          // participant pour retrouver facilement son paiement.
+          const url = new URL(CONFIG.lienCarte);
+          url.searchParams.set("prefilled_email", data.get("email"));
+          url.searchParams.set(
+            "client_reference_id",
+            nomSimple.replace(/[^A-Za-z0-9]+/g, "-").slice(0, 200)
+          );
+
           const lien = document.createElement("a");
-          lien.href = CONFIG.lienCarte;
+          lien.href = url.href;
           lien.target = "_blank";
           lien.rel = "noopener";
           lien.className = "bouton";
@@ -693,7 +702,7 @@
             ["IBAN", iban],
             ["BIC", bic],
             ["Montant", euros(total)],
-            ["Libellé du virement", `Facettes de l’eau — ${nom}`]
+            ["Libellé du virement", `Facettes eau ${nomSimple}`]
           ].filter(([, valeur]) => valeur));
         } else {
           const note = document.createElement("dd");

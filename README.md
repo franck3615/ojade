@@ -30,14 +30,15 @@ Tant que l’identifiant n’est pas renseigné, le formulaire affiche
 exportée depuis Formspree (fichier CSV, à ouvrir dans Excel ou Google Sheets).
 L’offre gratuite de Formspree couvre 50 inscriptions par mois.
 
-### Ajouter les liens de paiement
+### Paiement
 
-En bas du fichier, dans le bloc `À MODIFIER` du script :
+Après l’envoi de son inscription, le participant voit le montant à régler et :
 
-- `lienCarte` : le lien de paiement par carte bancaire (SumUp, HelloAsso…) ;
-- `virement` : titulaire du compte, IBAN et BIC ;
-- `dateLimite` : dernier jour d’inscription (inclus).
+- **par carte bancaire** : un bouton vers le lien de paiement Stripe, avec son
+  e-mail pré-rempli et son nom transmis à Stripe (référence client) pour
+  retrouver facilement son paiement ;
+- **par virement** : le titulaire (Ojade), l’IBAN, le BIC, le montant et un
+  libellé de virement à son nom.
 
-Ces informations s’affichent après l’envoi de l’inscription, avec le montant
-à régler. Tant qu’elles sont vides, le participant lit qu’elles lui seront
-envoyées par e-mail.
+Ces informations se modifient en bas du fichier, dans le bloc `À MODIFIER` du
+script, tout comme `dateLimite` (dernier jour d’inscription, inclus).
